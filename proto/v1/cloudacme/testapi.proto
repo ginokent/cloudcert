@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package cloudacme.v1;
+option go_package = "github.com/newtstat/cloudacme/proto/generated/go/v1/cloudacme";
+
+import "google/api/annotations.proto";
+import "validate/validate.proto";
+
+message TestAPIEchoRequest {
+  string message = 1;
+}
+
+message TestAPIEchoResponse {
+  string message = 1;
+}
+
+service TestAPI {
+  rpc Echo(TestAPIEchoRequest) returns (TestAPIEchoResponse) {
+    option (google.api.http) = {
+      post: "/rpc/v1/testapi/echo"
+      body: "*"
+    };
+  }
+}

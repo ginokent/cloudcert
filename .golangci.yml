@@ -1,0 +1,46 @@
+# https://golangci-lint.run/usage/linters/
+linters:
+  enable-all: true
+  disable:
+    - contextcheck
+    - exhaustivestruct
+    - golint
+    - interfacer
+    - lll
+    - maligned
+    - nlreturn # ignore "return with no blank line before (nlreturn)"
+    - scopelint
+    - varnamelen
+    - wsl # ignore "declarations should never be cuddled (wsl)"
+
+linters-settings:
+  varnamelen:
+    ignore-decls:
+      - l *Logger
+      - l *rec.Logger
+      - rw http.ResponseWriter
+      - r *http.Request
+  wrapcheck:
+    ignoreSigs:
+      - func fmt.Errorf(format string, a ...any) error
+      - func golang.org/x/xerrors.Errorf(format string, a ...interface{}) error
+      - func (*github.com/rec-logger/rec.go.errorReturner).Err() error
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - containedctx
+        - cyclop
+        - dupl
+        - exhaustivestruct
+        - funlen
+        - gochecknoglobals
+        - gocognit
+        - goconst
+        - goerr113
+        - gomnd
+        - maintidx
+        - nlreturn
+        - noctx
+        - varnamelen

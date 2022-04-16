@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package cloudacme.v1;
+option go_package = "github.com/newtstat/cloudacme/proto/generated/go/v1/cloudacme";
+
+import "google/api/annotations.proto";
+import "validate/validate.proto";
+
+message IssueCertificateRequest {
+  enum Provider {
+    none = 0;
+    gcloud = 1;
+  }
+
+  string vaultProvider = 1 [(validate.rules).string = { in: [ "gcloud" ] }];
+  string privateKeyVaultResource = 2 [(validate.rules).string.min_len = 1];
+  string certificateVaultResource = 3 [(validate.rules).string.min_len = 1];
+
+  bool renewPrivateKey = 4;
+  string keyAlgorithm = 5 [(validate.rules).string = {
+    in: [ "", "rsa2048", "rsa4096", "rsa8192", "ecdsa256", "ecdsa384" ]
+  }];
+
+  string dnsProvider = 6 [(validate.rules).string = { in: [ "gcloud" ] }];
+  string dnsProviderID = 7 [(validate.rules).string.min_len = 1];
+  bool termsOfServiceAgreed = 8;
+  string email = 9 [(validate.rules).string.email = true];
+  int64 thresholdOfDaysToExpire = 10;
+  repeated string domains = 11 [(validate.rules).repeated .min_items = 1];
+  bool staging = 12;
+}
+
+message IssueCertificateResponse {
+  string privateKeyVaultVersionResource = 1;
+  string certificateVaultVersionResource = 2;
+}
+
+service Certificates {
+  rpc Issue(IssueCertificateRequest) returns (IssueCertificateResponse) {
+    option (google.api.http) = {
+      post: "/rpc/v1/certificates/issue"
+      body: "*"
+    };
+  }
+}

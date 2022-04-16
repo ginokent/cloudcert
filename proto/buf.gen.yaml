@@ -1,0 +1,20 @@
+version: v1
+plugins:
+  - name: go
+    out: generated/go
+    opt:
+      - paths=source_relative
+  - name: validate
+    out: generated/go
+    opt:
+      - paths=source_relative
+      - lang=go
+  - name: go-grpc
+    out: generated/go
+    opt:
+      - paths=source_relative
+  - name: grpc-gateway
+    out: generated/go
+    opt:
+      - paths=source_relative
+      - generate_unbound_methods=true

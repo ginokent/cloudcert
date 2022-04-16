@@ -1,0 +1,15 @@
+# unique
+/.local/
+/cloudacme
+/tmp
+
+# terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+.terraform.tfstate.lock.info
+
+# codecov
+coverage.txt
+coverage.html
