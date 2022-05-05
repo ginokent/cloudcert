@@ -23,9 +23,9 @@ import (
 var _ LetsEncryptRepository = (*letsEncryptGoogleCloudDNSRepository)(nil)
 
 type letsEncryptGoogleCloudDNSRepository struct {
-	user                 *User
 	termsOfServiceAgreed bool
-	legoClient           *lego.Client
+	email                string
+	staging              bool
 	provider             challenge.Provider
 }
 
@@ -33,7 +33,6 @@ func NewLetsEncryptGoogleCloudRepository( // nolint: ireturn
 	ctx context.Context,
 	termsOfServiceAgreed bool,
 	email string,
-	privateKey crypto.PrivateKey,
 	googleCloudProject string,
 	staging bool,
 	logWriter io.Writer,
@@ -42,30 +41,25 @@ func NewLetsEncryptGoogleCloudRepository( // nolint: ireturn
 		ctx,
 		termsOfServiceAgreed,
 		email,
-		privateKey,
 		googleCloudProject,
 		staging,
 		logWriter,
 		google.DefaultClient,
 		gcloud.NewDNSProviderConfig,
-		lego.NewClient,
 	)
 }
 
 var legoLoggerOnce = &sync.Once{} // nolint: gochecknoglobals
 
-// nolint: funlen
 func newLetsEncryptGoogleCloudRepository(
 	ctx context.Context,
 	termsOfServiceAgreed bool,
 	email string,
-	privateKey crypto.PrivateKey,
 	googleCloudProject string,
 	staging bool,
 	logWriter io.Writer,
 	google_DefaultClient func(ctx context.Context, scope ...string) (*http.Client, error), // nolint: revive
 	gcloud_NewDNSProviderConfig func(config *gcloud.Config) (*gcloud.DNSProvider, error), // nolint: revive
-	lego_NewClient func(config *lego.Config) (*lego.Client, error), // nolint: revive
 ) (*letsEncryptGoogleCloudDNSRepository, error) {
 	ctx, span := trace.Start(ctx, "repository.NewLetsEncryptGoogleCloudRepository")
 	defer span.End()
@@ -102,42 +96,50 @@ func newLetsEncryptGoogleCloudRepository(
 		return nil, xerrors.Errorf("gcloud.NewDNSProviderConfig: %w", err)
 	}
 
-	user := &User{
-		email: email,
+	return &letsEncryptGoogleCloudDNSRepository{
+		termsOfServiceAgreed: termsOfServiceAgreed,
+		staging:              staging,
+		email:                email,
+		provider:             dnsProvider,
+	}, nil
+}
+
+func (repo *letsEncryptGoogleCloudDNSRepository) newClient(ctx context.Context, privateKey crypto.PrivateKey) (user *User, legoClient *lego.Client, err error) {
+	user = &User{
+		email: repo.email,
 		key:   privateKey,
 	}
 
 	legoConfig := lego.NewConfig(user)
 
-	if staging {
+	if repo.staging {
 		legoConfig.CADirURL = lego.LEDirectoryStaging
 	}
 
-	var legoClient *lego.Client
 	if err := trace.StartFunc(ctx, "lego.NewClient")(func(child context.Context) (err error) {
-		legoClient, err = lego_NewClient(legoConfig)
+		legoClient, err = lego.NewClient(legoConfig)
 		return
 	}); err != nil {
-		return nil, xerrors.Errorf("lego.NewClient: %w", err)
+		return nil, nil, xerrors.Errorf("lego.NewClient: %w", err)
 	}
 
-	return &letsEncryptGoogleCloudDNSRepository{
-		user:                 user,
-		termsOfServiceAgreed: termsOfServiceAgreed,
-		legoClient:           legoClient,
-		provider:             dnsProvider,
-	}, nil
+	return user, legoClient, nil
 }
 
 // IssueCertificate issues a Let's Encrypt certificate.
-func (repo *letsEncryptGoogleCloudDNSRepository) IssueCertificate(ctx context.Context, domains []string) (privateKey, certificate, issuerCertificate, csr []byte, err error) {
+func (repo *letsEncryptGoogleCloudDNSRepository) IssueCertificate(ctx context.Context, privatekey crypto.PrivateKey, domains []string) (privateKeyPEM, certificatePEM, issuerCertificate, csr []byte, err error) {
+	user, legoClient, err := repo.newClient(ctx, privatekey)
+	if err != nil {
+		return nil, nil, nil, nil, xerrors.Errorf("lego.NewClient: %w", err)
+	}
+
 	return repo.issueCertificate(
 		ctx,
-		repo.user,
-		repo.legoClient.Challenge,
-		repo.legoClient.Registration,
+		user,
+		legoClient.Challenge,
+		legoClient.Registration,
 		repo.termsOfServiceAgreed,
-		repo.legoClient.Certificate,
+		legoClient.Certificate,
 		domains,
 	)
 }

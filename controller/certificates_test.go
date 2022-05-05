@@ -3,7 +3,6 @@ package controller
 
 import (
 	"context"
-	"crypto"
 	"io"
 	"reflect"
 	"strings"
@@ -41,7 +40,7 @@ func TestCertificatesController_issue(t *testing.T) {
 		ctx                                   context.Context
 		req                                   *cloudacme.IssueCertificateRequest
 		newVaultGoogleSecretManagerRepository func(ctx context.Context) (repository.VaultRepository, error)
-		newLetsEncryptGoogleCloudRepository   func(ctx context.Context, termsOfServiceAgreed bool, email string, privateKey crypto.PrivateKey, googleCloudProject string, staging bool, logWriter io.Writer) (repository.LetsEncryptRepository, error)
+		newLetsEncryptGoogleCloudRepository   func(ctx context.Context, termsOfServiceAgreed bool, email string, googleCloudProject string, staging bool, logWriter io.Writer) (repository.LetsEncryptRepository, error)
 	}
 	tests := []struct {
 		name     string
@@ -57,7 +56,7 @@ func TestCertificatesController_issue(t *testing.T) {
 				func(ctx context.Context) (repository.VaultRepository, error) {
 					return &mock.VaultRepository{GetVaultVersionDataIfExistsBool: true}, nil
 				},
-				func(ctx context.Context, termsOfServiceAgreed bool, email string, privateKey crypto.PrivateKey, googleCloudProject string, staging bool, logWriter io.Writer) (repository.LetsEncryptRepository, error) {
+				func(ctx context.Context, termsOfServiceAgreed bool, email string, googleCloudProject string, staging bool, logWriter io.Writer) (repository.LetsEncryptRepository, error) {
 					return &mock.LetsEncryptRepository{}, nil
 				},
 			},
@@ -72,7 +71,7 @@ func TestCertificatesController_issue(t *testing.T) {
 				func(ctx context.Context) (repository.VaultRepository, error) {
 					return &mock.VaultRepository{GetVaultVersionDataIfExistsBool: true}, nil
 				},
-				func(ctx context.Context, termsOfServiceAgreed bool, email string, privateKey crypto.PrivateKey, googleCloudProject string, staging bool, logWriter io.Writer) (repository.LetsEncryptRepository, error) {
+				func(ctx context.Context, termsOfServiceAgreed bool, email string, googleCloudProject string, staging bool, logWriter io.Writer) (repository.LetsEncryptRepository, error) {
 					return &mock.LetsEncryptRepository{}, nil
 				},
 			},
@@ -85,7 +84,7 @@ func TestCertificatesController_issue(t *testing.T) {
 				contexts.WithLogger(context.Background(), rec.Must(rec.New(io.Discard))),
 				&cloudacme.IssueCertificateRequest{VaultProvider: "gcloud"},
 				func(ctx context.Context) (repository.VaultRepository, error) { return nil, fixture.ErrTestError },
-				func(ctx context.Context, termsOfServiceAgreed bool, email string, privateKey crypto.PrivateKey, googleCloudProject string, staging bool, logWriter io.Writer) (repository.LetsEncryptRepository, error) {
+				func(ctx context.Context, termsOfServiceAgreed bool, email string, googleCloudProject string, staging bool, logWriter io.Writer) (repository.LetsEncryptRepository, error) {
 					return &mock.LetsEncryptRepository{}, nil
 				},
 			},
@@ -100,7 +99,7 @@ func TestCertificatesController_issue(t *testing.T) {
 				func(ctx context.Context) (repository.VaultRepository, error) {
 					return &mock.VaultRepository{LockVaultErr: fixture.ErrTestError}, nil
 				},
-				func(ctx context.Context, termsOfServiceAgreed bool, email string, privateKey crypto.PrivateKey, googleCloudProject string, staging bool, logWriter io.Writer) (repository.LetsEncryptRepository, error) {
+				func(ctx context.Context, termsOfServiceAgreed bool, email string, googleCloudProject string, staging bool, logWriter io.Writer) (repository.LetsEncryptRepository, error) {
 					return &mock.LetsEncryptRepository{}, nil
 				},
 			},
@@ -115,7 +114,7 @@ func TestCertificatesController_issue(t *testing.T) {
 				func(ctx context.Context) (repository.VaultRepository, error) {
 					return &mock.VaultRepository{UnlockVaultErr: fixture.ErrTestError}, nil
 				},
-				func(ctx context.Context, termsOfServiceAgreed bool, email string, privateKey crypto.PrivateKey, googleCloudProject string, staging bool, logWriter io.Writer) (repository.LetsEncryptRepository, error) {
+				func(ctx context.Context, termsOfServiceAgreed bool, email string, googleCloudProject string, staging bool, logWriter io.Writer) (repository.LetsEncryptRepository, error) {
 					return &mock.LetsEncryptRepository{}, nil
 				},
 			},
@@ -130,7 +129,7 @@ func TestCertificatesController_issue(t *testing.T) {
 				func(ctx context.Context) (repository.VaultRepository, error) {
 					return &mock.VaultRepository{GetVaultVersionDataIfExistsErr: fixture.ErrTestError}, nil
 				},
-				func(ctx context.Context, termsOfServiceAgreed bool, email string, privateKey crypto.PrivateKey, googleCloudProject string, staging bool, logWriter io.Writer) (repository.LetsEncryptRepository, error) {
+				func(ctx context.Context, termsOfServiceAgreed bool, email string, googleCloudProject string, staging bool, logWriter io.Writer) (repository.LetsEncryptRepository, error) {
 					return &mock.LetsEncryptRepository{}, nil
 				},
 			},
@@ -145,7 +144,7 @@ func TestCertificatesController_issue(t *testing.T) {
 				func(ctx context.Context) (repository.VaultRepository, error) {
 					return &mock.VaultRepository{}, nil
 				},
-				func(ctx context.Context, termsOfServiceAgreed bool, email string, privateKey crypto.PrivateKey, googleCloudProject string, staging bool, logWriter io.Writer) (repository.LetsEncryptRepository, error) {
+				func(ctx context.Context, termsOfServiceAgreed bool, email string, googleCloudProject string, staging bool, logWriter io.Writer) (repository.LetsEncryptRepository, error) {
 					return nil, fixture.ErrTestError
 				},
 			},
@@ -160,7 +159,7 @@ func TestCertificatesController_issue(t *testing.T) {
 				func(ctx context.Context) (repository.VaultRepository, error) {
 					return &mock.VaultRepository{}, nil
 				},
-				func(ctx context.Context, termsOfServiceAgreed bool, email string, privateKey crypto.PrivateKey, googleCloudProject string, staging bool, logWriter io.Writer) (repository.LetsEncryptRepository, error) {
+				func(ctx context.Context, termsOfServiceAgreed bool, email string, googleCloudProject string, staging bool, logWriter io.Writer) (repository.LetsEncryptRepository, error) {
 					return nil, fixture.ErrTestError
 				},
 			},
@@ -175,7 +174,7 @@ func TestCertificatesController_issue(t *testing.T) {
 				func(ctx context.Context) (repository.VaultRepository, error) {
 					return &mock.VaultRepository{GetVaultVersionDataIfExistsBool: true}, nil
 				},
-				func(ctx context.Context, termsOfServiceAgreed bool, email string, privateKey crypto.PrivateKey, googleCloudProject string, staging bool, logWriter io.Writer) (repository.LetsEncryptRepository, error) {
+				func(ctx context.Context, termsOfServiceAgreed bool, email string, googleCloudProject string, staging bool, logWriter io.Writer) (repository.LetsEncryptRepository, error) {
 					return &mock.LetsEncryptRepository{
 						IssueCertificateErr: fixture.ErrTestError,
 					}, nil

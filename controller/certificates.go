@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"crypto"
 	"io"
 	"os"
 
@@ -27,7 +26,7 @@ func (*CertificatesController) issue(
 	ctx context.Context,
 	req *cloudacme.IssueCertificateRequest,
 	newVaultGoogleSecretManagerRepository func(ctx context.Context) (repository.VaultRepository, error),
-	newLetsEncryptGoogleCloudRepository func(ctx context.Context, termsOfServiceAgreed bool, email string, privateKey crypto.PrivateKey, googleCloudProject string, staging bool, logWriter io.Writer) (repository.LetsEncryptRepository, error),
+	newLetsEncryptGoogleCloudRepository func(ctx context.Context, termsOfServiceAgreed bool, email string, googleCloudProject string, staging bool, logWriter io.Writer) (repository.LetsEncryptRepository, error),
 ) (
 	resp *cloudacme.IssueCertificateResponse,
 	err error,
@@ -65,7 +64,7 @@ func (*CertificatesController) issue(
 	var letsencryptRepo repository.LetsEncryptRepository
 	switch req.GetDnsProvider() {
 	case cloudacme.IssueCertificateRequest_gcloud.String():
-		letsencryptRepo, err = newLetsEncryptGoogleCloudRepository(ctx, req.GetTermsOfServiceAgreed(), req.GetEmail(), privateKey, req.GetDnsProviderID(), req.GetStaging(), os.Stdout)
+		letsencryptRepo, err = newLetsEncryptGoogleCloudRepository(ctx, req.GetTermsOfServiceAgreed(), req.GetEmail(), req.GetDnsProviderID(), req.GetStaging(), os.Stdout)
 		if err != nil {
 			return nil, xerrors.Errorf("repository.NewLetsEncryptGoogleCloudRepository: %w", err)
 		}
@@ -75,7 +74,7 @@ func (*CertificatesController) issue(
 
 	certUseCase := usecase.NewCertificatesUseCase(vaultRepo, letsencryptRepo)
 
-	privateKeyVaultVersionResource, certificateVaultVersionResource, err := certUseCase.IssueCertificate(ctx, privateKeyRenewed, req.GetPrivateKeyVaultResource(), req.GetCertificateVaultResource(), req.GetThresholdOfDaysToExpire(), req.GetDomains())
+	privateKeyVaultVersionResource, certificateVaultVersionResource, err := certUseCase.IssueCertificate(ctx, privateKey, privateKeyRenewed, req.GetPrivateKeyVaultResource(), req.GetCertificateVaultResource(), req.GetThresholdOfDaysToExpire(), req.GetDomains())
 	if err != nil {
 		return nil, xerrors.Errorf("(usecase.CertificatesUseCase).IssueCertificate: %w", err)
 	}

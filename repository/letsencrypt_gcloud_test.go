@@ -4,9 +4,6 @@ package repository
 import (
 	"context"
 	"crypto"
-	"crypto/ecdsa"
-	"crypto/elliptic"
-	"crypto/rand"
 	"io"
 	"net/http"
 	"testing"
@@ -14,7 +11,6 @@ import (
 	"github.com/go-acme/lego/v4/certificate"
 	"github.com/go-acme/lego/v4/challenge"
 	"github.com/go-acme/lego/v4/challenge/dns01"
-	"github.com/go-acme/lego/v4/lego"
 	"github.com/go-acme/lego/v4/providers/dns/gcloud"
 	"github.com/go-acme/lego/v4/registration"
 	"github.com/newtstat/cloudacme/test/fixture"
@@ -57,15 +53,12 @@ const (
 	testEmail = "root@localhost"
 )
 
-var testPrivateKey = nits.Crypto.MustGenerateKey(ecdsa.GenerateKey(elliptic.P256(), rand.Reader))
-
 func TestNewLetsEncryptGoogleCloudRepository(t *testing.T) {
 	t.Parallel()
 	type args struct {
 		ctx                  context.Context
 		termsOfServiceAgreed bool
 		email                string
-		privateKey           crypto.PrivateKey
 		googleCloudProject   string
 		staging              bool
 	}
@@ -74,13 +67,13 @@ func TestNewLetsEncryptGoogleCloudRepository(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{"success()", args{context.TODO(), true, testEmail, testPrivateKey, "", false}, false},
+		{"success()", args{context.TODO(), true, testEmail, "", false}, false},
 	}
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			_, err := NewLetsEncryptGoogleCloudRepository(tt.args.ctx, tt.args.termsOfServiceAgreed, tt.args.email, tt.args.privateKey, tt.args.googleCloudProject, tt.args.staging, io.Discard)
+			_, err := NewLetsEncryptGoogleCloudRepository(tt.args.ctx, tt.args.termsOfServiceAgreed, tt.args.email, tt.args.googleCloudProject, tt.args.staging, io.Discard)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewLetsEncryptGoogleCloudRepository() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -95,36 +88,31 @@ func Test_newLetsEncryptGoogleCloudRepository(t *testing.T) {
 	failureGoogleDefaultClient := func(ctx context.Context, scope ...string) (*http.Client, error) { return nil, fixture.ErrTestError }
 	successGcloudNewDNSProviderConfig := func(config *gcloud.Config) (*gcloud.DNSProvider, error) { return &gcloud.DNSProvider{}, nil }
 	failureGcloudNewDNSProviderConfig := func(config *gcloud.Config) (*gcloud.DNSProvider, error) { return nil, fixture.ErrTestError }
-	successLegoNewClient := func(config *lego.Config) (*lego.Client, error) { return &lego.Client{}, nil }
-	failureLegoNewClient := func(config *lego.Config) (*lego.Client, error) { return nil, fixture.ErrTestError }
 	type args struct {
 		ctx                         context.Context
 		termsOfServiceAgreed        bool
 		email                       string
-		privateKey                  crypto.PrivateKey
 		googleCloudProject          string
 		staging                     bool
 		google_DefaultClient        func(ctx context.Context, scope ...string) (*http.Client, error) // nolint: revive
 		gcloud_NewDNSProviderConfig func(config *gcloud.Config) (*gcloud.DNSProvider, error)         // nolint: revive
-		lego_NewClient              func(config *lego.Config) (*lego.Client, error)                  // nolint: revive
 	}
 	tests := []struct {
 		name    string
 		args    args
 		wantErr bool
 	}{
-		{"success()" /************************/, args{context.TODO(), true /***/, testEmail, testPrivateKey, "", true, successGoogleDefaultClient, successGcloudNewDNSProviderConfig, successLegoNewClient}, false},
-		{"failure(google.DefaultClient)" /****/, args{context.TODO(), true /***/, testEmail, testPrivateKey, "", true, failureGoogleDefaultClient, successGcloudNewDNSProviderConfig, successLegoNewClient}, true},
-		{"failure(gcloud.NewDNSProviderConfig)", args{context.TODO(), true /***/, testEmail, testPrivateKey, "", true, successGoogleDefaultClient, failureGcloudNewDNSProviderConfig, successLegoNewClient}, true},
-		{"failure(lego.NewClient)" /**********/, args{context.TODO(), true /***/, testEmail, testPrivateKey, "", true, successGoogleDefaultClient, successGcloudNewDNSProviderConfig, failureLegoNewClient}, true},
-		{"failure(termsOfServiceAgreed)" /****/, args{context.TODO(), false /**/, testEmail, testPrivateKey, "", true, successGoogleDefaultClient, successGcloudNewDNSProviderConfig, successLegoNewClient}, true},
-		{"failure(email)" /*******************/, args{context.TODO(), true /***/, "" /****/, testPrivateKey, "", true, successGoogleDefaultClient, successGcloudNewDNSProviderConfig, successLegoNewClient}, true},
+		{"success()" /************************/, args{context.TODO(), true /***/, testEmail, "", true, successGoogleDefaultClient, successGcloudNewDNSProviderConfig}, false},
+		{"failure(google.DefaultClient)" /****/, args{context.TODO(), true /***/, testEmail, "", true, failureGoogleDefaultClient, successGcloudNewDNSProviderConfig}, true},
+		{"failure(gcloud.NewDNSProviderConfig)", args{context.TODO(), true /***/, testEmail, "", true, successGoogleDefaultClient, failureGcloudNewDNSProviderConfig}, true},
+		{"failure(termsOfServiceAgreed)" /****/, args{context.TODO(), false /**/, testEmail, "", true, successGoogleDefaultClient, successGcloudNewDNSProviderConfig}, true},
+		{"failure(email)" /*******************/, args{context.TODO(), true /***/, "" /****/, "", true, successGoogleDefaultClient, successGcloudNewDNSProviderConfig}, true},
 	}
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			_, err := newLetsEncryptGoogleCloudRepository(tt.args.ctx, tt.args.termsOfServiceAgreed, tt.args.email, tt.args.privateKey, tt.args.googleCloudProject, tt.args.staging, io.Discard, tt.args.google_DefaultClient, tt.args.gcloud_NewDNSProviderConfig, tt.args.lego_NewClient)
+			_, err := newLetsEncryptGoogleCloudRepository(tt.args.ctx, tt.args.termsOfServiceAgreed, tt.args.email, tt.args.googleCloudProject, tt.args.staging, io.Discard, tt.args.google_DefaultClient, tt.args.gcloud_NewDNSProviderConfig)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("newLetsEncryptGoogleCloudRepository() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -137,14 +125,16 @@ func Test_letsEncryptGoogleCloudDNSRepository_IssueCertificate(t *testing.T) {
 	t.Parallel()
 
 	type args struct {
-		domains []string
+		privateKey crypto.PrivateKey
+		domains    []string
 	}
 	tests := []struct {
 		name    string
 		args    args
 		wantErr bool
 	}{
-		{"failure(domains-is-nil)", args{nil}, true},
+		{"failure(privateKey-is-nil)", args{nil, nil}, true},
+		{"failure(domains-is-nil)", args{nits.Crypto.MustGenerateKey(nits.Crypto.GenerateKey("rsa512")), nil}, true},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -153,17 +143,12 @@ func Test_letsEncryptGoogleCloudDNSRepository_IssueCertificate(t *testing.T) {
 
 			successGoogleDefaultClient := func(ctx context.Context, scope ...string) (*http.Client, error) { return http.DefaultClient, nil }
 			successGcloudNewDNSProviderConfig := func(config *gcloud.Config) (*gcloud.DNSProvider, error) { return &gcloud.DNSProvider{}, nil }
-			successLegoNewClient := func(config *lego.Config) (*lego.Client, error) { return &lego.Client{}, nil }
-			repo, repoErr := newLetsEncryptGoogleCloudRepository(context.TODO(), true, testEmail, testPrivateKey, "", true, io.Discard, successGoogleDefaultClient, successGcloudNewDNSProviderConfig, successLegoNewClient)
+			repo, repoErr := newLetsEncryptGoogleCloudRepository(context.TODO(), true, testEmail, "", true, io.Discard, successGoogleDefaultClient, successGcloudNewDNSProviderConfig)
 			if repoErr != nil {
 				t.Errorf("newLetsEncryptGoogleCloudRepository: %v", repoErr)
 			}
 
-			if repo.user.GetEmail() != testEmail {
-				t.Errorf("repo.user.GetEmail() != testEmail")
-			}
-
-			_, _, _, _, err := repo.IssueCertificate(context.TODO(), tt.args.domains)
+			_, _, _, _, err := repo.IssueCertificate(context.TODO(), tt.args.privateKey, tt.args.domains)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("letsEncryptGoogleCloudDNSRepository.IssueCertificate() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -176,6 +161,7 @@ func Test_letsEncryptGoogleCloudDNSRepository_issueCertificate(t *testing.T) {
 	t.Parallel()
 
 	type args struct {
+		user                 *User
 		challenge            challenger
 		reg                  registerer
 		termsOfServiceAgreed bool
@@ -187,10 +173,10 @@ func Test_letsEncryptGoogleCloudDNSRepository_issueCertificate(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{"success()", args{&mockChallenger{} /****************************************/, &mockRegisterer{} /********************************/, true, &mockObtainer{ObtainReturn: &certificate.Resource{}} /**/, []string{"localhost"}}, false},
-		{"failure()", args{&mockChallenger{SetDNS01ProviderError: fixture.ErrTestError}, &mockRegisterer{} /********************************/, true, &mockObtainer{} /***************************************/, []string{"localhost"}}, true},
-		{"failure()", args{&mockChallenger{} /****************************************/, &mockRegisterer{RegisterError: fixture.ErrTestError}, true, &mockObtainer{} /***************************************/, []string{"localhost"}}, true},
-		{"failure()", args{&mockChallenger{} /****************************************/, &mockRegisterer{} /********************************/, true, &mockObtainer{ObtainError: fixture.ErrTestError} /******/, []string{"localhost"}}, true},
+		{"success()", args{&User{}, &mockChallenger{} /****************************************/, &mockRegisterer{} /********************************/, true, &mockObtainer{ObtainReturn: &certificate.Resource{}} /**/, []string{"localhost"}}, false},
+		{"failure()", args{&User{}, &mockChallenger{SetDNS01ProviderError: fixture.ErrTestError}, &mockRegisterer{} /********************************/, true, &mockObtainer{} /***************************************/, []string{"localhost"}}, true},
+		{"failure()", args{&User{}, &mockChallenger{} /****************************************/, &mockRegisterer{RegisterError: fixture.ErrTestError}, true, &mockObtainer{} /***************************************/, []string{"localhost"}}, true},
+		{"failure()", args{&User{}, &mockChallenger{} /****************************************/, &mockRegisterer{} /********************************/, true, &mockObtainer{ObtainError: fixture.ErrTestError} /******/, []string{"localhost"}}, true},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -199,13 +185,12 @@ func Test_letsEncryptGoogleCloudDNSRepository_issueCertificate(t *testing.T) {
 
 			successGoogleDefaultClient := func(ctx context.Context, scope ...string) (*http.Client, error) { return http.DefaultClient, nil }
 			successGcloudNewDNSProviderConfig := func(config *gcloud.Config) (*gcloud.DNSProvider, error) { return &gcloud.DNSProvider{}, nil }
-			successLegoNewClient := func(config *lego.Config) (*lego.Client, error) { return &lego.Client{}, nil }
-			repo, repoErr := newLetsEncryptGoogleCloudRepository(context.TODO(), true, testEmail, testPrivateKey, "", true, io.Discard, successGoogleDefaultClient, successGcloudNewDNSProviderConfig, successLegoNewClient)
+			repo, repoErr := newLetsEncryptGoogleCloudRepository(context.TODO(), true, testEmail, "", true, io.Discard, successGoogleDefaultClient, successGcloudNewDNSProviderConfig)
 			if repoErr != nil {
 				t.Errorf("newLetsEncryptGoogleCloudRepository: %v", repoErr)
 			}
 
-			_, _, _, _, err := repo.issueCertificate(context.TODO(), repo.user, tt.args.challenge, tt.args.reg, tt.args.termsOfServiceAgreed, tt.args.cert, tt.args.domains)
+			_, _, _, _, err := repo.issueCertificate(context.TODO(), tt.args.user, tt.args.challenge, tt.args.reg, tt.args.termsOfServiceAgreed, tt.args.cert, tt.args.domains)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("letsEncryptGoogleCloudDNSRepository.issueCertificate() error = %v, wantErr %v", err, tt.wantErr)
 				return

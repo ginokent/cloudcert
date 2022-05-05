@@ -2,7 +2,9 @@ package usecase
 
 import (
 	"context"
+	"crypto"
 	"crypto/tls"
+	"crypto/x509"
 
 	"github.com/newtstat/cloudacme/contexts"
 	"github.com/newtstat/cloudacme/repository"
@@ -12,7 +14,7 @@ import (
 )
 
 type CertificatesUseCase interface {
-	IssueCertificate(ctx context.Context, privateKeyRenewed bool, privateKeyVaultResource string, certificateVaultResource string, thresholdOfDaysToExpire int64, domains []string) (privateKeyVaultVersionResource, certificateVaultVersionResource string, err error)
+	IssueCertificate(ctx context.Context, privateKey crypto.PrivateKey, privateKeyRenewed bool, privateKeyVaultResource string, certificateVaultResource string, thresholdOfDaysToExpire int64, domains []string) (privateKeyVaultVersionResource, certificateVaultVersionResource string, err error)
 }
 
 var _ CertificatesUseCase = (*certificatesUseCase)(nil)
@@ -32,6 +34,7 @@ func NewCertificatesUseCase(certificatesRepo repository.VaultRepository, letsenc
 
 func (uc *certificatesUseCase) IssueCertificate(
 	ctx context.Context,
+	privateKey crypto.PrivateKey,
 	privateKeyRenewed bool,
 	privateKeyVaultResource string,
 	certificateVaultResource string,
@@ -42,13 +45,16 @@ func (uc *certificatesUseCase) IssueCertificate(
 	certificateVaultVersionResource string,
 	err error,
 ) {
-	return uc.issueCertificate(ctx,
+	return uc.issueCertificate(
+		ctx,
+		privateKey,
 		privateKeyRenewed,
 		privateKeyVaultResource,
 		certificateVaultResource,
 		thresholdOfDaysToExpire,
 		domains,
 		nits.X509.CheckCertificatePEM,
+		nits.X509.ParsePKCSXPrivateKeyPEM,
 		tls.X509KeyPair,
 	)
 }
@@ -56,12 +62,14 @@ func (uc *certificatesUseCase) IssueCertificate(
 // nolint: cyclop, funlen
 func (uc *certificatesUseCase) issueCertificate(
 	ctx context.Context,
+	privateKey crypto.PrivateKey,
 	privateKeyRenewed bool,
 	privateKeyVaultResource string,
 	certificateVaultResource string,
 	thresholdOfDaysToExpire int64,
 	domains []string,
 	checkCertificatePEMFunc func(pemData []byte) (notyet bool, daysToStart int64, expired bool, daysToExpire int64, err error),
+	parsePKCSXPrivateKeyPEMFunc func(pemData []byte) (crypto.PrivateKey, error),
 	tls_X509KeyPair func(certPEMBlock []byte, keyPEMBlock []byte) (tls.Certificate, error), // nolint: revive
 ) (
 	privateKeyVaultVersionResource,
@@ -73,21 +81,28 @@ func (uc *certificatesUseCase) issueCertificate(
 
 	l := contexts.GetLogger(ctx)
 
-	privateKeyExists, privateKeyVaultVersionResource, privateKeyPEM, privateKeyErr := uc.vaultRepo.GetVaultVersionDataIfExists(ctx, privateKeyVaultResource+"/versions/latest")
-	certificateExists, certificateVaultVersionResource, certificatePEM, certificateErr := uc.vaultRepo.GetVaultVersionDataIfExists(ctx, certificateVaultResource+"/versions/latest")
-	if privateKeyErr != nil || certificateErr != nil {
-		return "", "", xerrors.Errorf("(*usecase.certificatesUseCase).vaultRepo.GetVaultVersionDataIfExists: privatekey=%v, certificate=%w", privateKeyErr, certificateErr)
+	certificateExists, certificateVaultVersionResource, certificatePEM, err := uc.vaultRepo.GetVaultVersionDataIfExists(ctx, certificateVaultResource+"/versions/latest")
+	if err != nil {
+		return "", "", xerrors.Errorf("(*usecase.certificatesUseCase).vaultRepo.GetVaultVersionDataIfExists: %w", err)
 	}
 
-	var certificateKeyPairIsBroken bool
-	if _, err := tls_X509KeyPair(certificatePEM, privateKeyPEM); err != nil {
-		l.E().Error(xerrors.Errorf("🚨 certificate key pair is broken. tls.X509KeyPair: %w", err))
-		certificateKeyPairIsBroken = true
+	var keyPairIsBroken bool
+	// nolint: godox
+	// TODO
+	privateKeyPEM, err := x509.MarshalPKCS8PrivateKey(privateKey)
+	if err != nil {
+		l.E().Error(xerrors.Errorf("🚨 private key is broken. tls.X509KeyPair: %w", err))
+		keyPairIsBroken = true
+	} else {
+		if _, err := tls_X509KeyPair(certificatePEM, privateKeyPEM); err != nil {
+			l.E().Error(xerrors.Errorf("🚨 certificate key pair is broken. tls.X509KeyPair: %w", err))
+			keyPairIsBroken = true
+		}
 	}
 
 	if !privateKeyRenewed && // NOTE: If renewPrivateKey, skip checking certificate and force to renew certificate
-		privateKeyExists && certificateExists &&
-		!certificateKeyPairIsBroken {
+		certificateExists &&
+		!keyPairIsBroken {
 		l.Info("🔬 checking certificate...")
 
 		var notyet bool
@@ -112,7 +127,7 @@ func (uc *certificatesUseCase) issueCertificate(
 		return "", "", xerrors.Errorf("(*usecase.certificatesUseCase).vaultRepo.CreateVaultIfNotExists: %w", err)
 	}
 
-	privateKeyPEM, certificatePEM, _, _, err = uc.letsencryptRepo.IssueCertificate(ctx, domains)
+	privateKeyPEM, certificatePEM, _, _, err = uc.letsencryptRepo.IssueCertificate(ctx, privateKey, domains)
 	if err != nil {
 		return "", "", xerrors.Errorf("(*usecase.certificatesUseCase).letsencryptRepo.IssueCertificate: %w", err)
 	}
