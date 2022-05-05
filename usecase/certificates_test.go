@@ -45,7 +45,7 @@ func Test_certificatesUseCase_IssueCertificate(t *testing.T) {
 	type args struct {
 		ctx                      context.Context
 		privateKey               crypto.PrivateKey
-		privateKeyRenewed        bool
+		renewPrivateKey          bool
 		privateKeyVaultResource  string
 		certificateVaultResource string
 		thresholdOfDaysToExpire  int64
@@ -70,7 +70,7 @@ func Test_certificatesUseCase_IssueCertificate(t *testing.T) {
 				vaultRepo:       tt.vaultRepo,
 				letsencryptRepo: tt.letsencryptRepo,
 			}
-			gotPrivateKeyVaultVersionResource, gotCertificateVaultVersionResource, err := s.IssueCertificate(tt.args.ctx, nil, tt.args.privateKeyRenewed, tt.args.privateKeyVaultResource, tt.args.certificateVaultResource, tt.args.thresholdOfDaysToExpire, tt.args.domains)
+			gotPrivateKeyVaultVersionResource, gotCertificateVaultVersionResource, err := s.IssueCertificate(tt.args.ctx, nil, tt.args.renewPrivateKey, tt.args.privateKeyVaultResource, tt.args.certificateVaultResource, tt.args.thresholdOfDaysToExpire, tt.args.domains)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("certificatesUseCase.IssueCertificate() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -90,7 +90,7 @@ func Test_certificatesUseCase_issueCertificate(t *testing.T) {
 	type args struct {
 		ctx                         context.Context
 		privateKey                  crypto.PrivateKey
-		privateKeyRenewed           bool
+		renewPrivateKey             bool
 		privateKeyVaultResource     string
 		certificateVaultResource    string
 		thresholdOfDaysToExpire     int64
@@ -153,8 +153,8 @@ func Test_certificatesUseCase_issueCertificate(t *testing.T) {
 				vaultRepo:       tt.vaultRepo,
 				letsencryptRepo: tt.letsencryptRepo,
 			}
-			// gotPrivateKeyVaultVersionResource, gotCertificateVaultVersionResource, err := s.issueCertificate(tt.args.ctx, tt.args.privateKey, tt.args.privateKeyRenewed, tt.args.privateKeyVaultResource, tt.args.certificateVaultResource, tt.args.thresholdOfDaysToExpire, tt.args.domains, tt.args.checkCertificatePEMFunc, tt.args.parsePKCSXPrivateKeyPEMFunc, tt.args.tls_X509KeyPair)
-			_, gotCertificateVaultVersionResource, err := s.issueCertificate(tt.args.ctx, tt.args.privateKey, tt.args.privateKeyRenewed, tt.args.privateKeyVaultResource, tt.args.certificateVaultResource, tt.args.thresholdOfDaysToExpire, tt.args.domains, tt.args.checkCertificatePEMFunc, tt.args.parsePKCSXPrivateKeyPEMFunc, tt.args.tls_X509KeyPair)
+			// gotPrivateKeyVaultVersionResource, gotCertificateVaultVersionResource, err := s.issueCertificate(tt.args.ctx, tt.args.privateKey, tt.args.renewPrivateKey, tt.args.privateKeyVaultResource, tt.args.certificateVaultResource, tt.args.thresholdOfDaysToExpire, tt.args.domains, tt.args.checkCertificatePEMFunc, tt.args.parsePKCSXPrivateKeyPEMFunc, tt.args.tls_X509KeyPair)
+			_, gotCertificateVaultVersionResource, err := s.issueCertificate(tt.args.ctx, tt.args.privateKey, tt.args.renewPrivateKey, tt.args.privateKeyVaultResource, tt.args.certificateVaultResource, tt.args.thresholdOfDaysToExpire, tt.args.domains, tt.args.checkCertificatePEMFunc, tt.args.parsePKCSXPrivateKeyPEMFunc, tt.args.tls_X509KeyPair)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("certificatesUseCase.issueCertificate() error = %v, wantErr %v", err, tt.wantErr)
 				return

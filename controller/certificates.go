@@ -56,7 +56,7 @@ func (*CertificatesController) issue(
 			l.E().Error(xerrors.Errorf("(usecase.PrivateKeyUseCase).Lock: %w", err))
 		}
 	}()
-	privateKeyRenewed, privateKey, err := privateKeyUsecase.GetPrivateKey(ctx, req.GetPrivateKeyVaultResource(), req.GetRenewPrivateKey(), req.GetKeyAlgorithm())
+	renewPrivateKey, privateKey, err := privateKeyUsecase.GetPrivateKey(ctx, req.GetPrivateKeyVaultResource(), req.GetRenewPrivateKey(), req.GetKeyAlgorithm())
 	if err != nil {
 		return nil, xerrors.Errorf("(usecase.PrivateKeyUseCase).GetPrivateKey: %w", err)
 	}
@@ -74,7 +74,7 @@ func (*CertificatesController) issue(
 
 	certUseCase := usecase.NewCertificatesUseCase(vaultRepo, letsencryptRepo)
 
-	privateKeyVaultVersionResource, certificateVaultVersionResource, err := certUseCase.IssueCertificate(ctx, privateKey, privateKeyRenewed, req.GetPrivateKeyVaultResource(), req.GetCertificateVaultResource(), req.GetThresholdOfDaysToExpire(), req.GetDomains())
+	privateKeyVaultVersionResource, certificateVaultVersionResource, err := certUseCase.IssueCertificate(ctx, privateKey, renewPrivateKey, req.GetPrivateKeyVaultResource(), req.GetCertificateVaultResource(), req.GetThresholdOfDaysToExpire(), req.GetDomains())
 	if err != nil {
 		return nil, xerrors.Errorf("(usecase.CertificatesUseCase).IssueCertificate: %w", err)
 	}

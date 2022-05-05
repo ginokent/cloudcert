@@ -10,7 +10,7 @@ require (
 	github.com/googleapis/gax-go v1.0.3
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.0
-	github.com/newtstat/nits.go v0.0.0-20220430170234-5e4787c0b0b8
+	github.com/newtstat/nits.go v0.0.0-20220505134818-e94b4e4cf241
 	github.com/rec-logger/rec.go v0.0.0-20220331092919-fb6e5d4907a2
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.31.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.31.0
