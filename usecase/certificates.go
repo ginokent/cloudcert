@@ -54,6 +54,7 @@ func (uc *certificatesUseCase) IssueCertificate(
 		domains,
 		nits.X509.CheckCertificatePEM,
 		nits.X509.ParsePKCSXPrivateKeyPEM,
+		nits.X509.MarshalPKCSXPrivateKeyPEM,
 		tls.X509KeyPair,
 	)
 }
@@ -69,6 +70,7 @@ func (uc *certificatesUseCase) issueCertificate(
 	domains []string,
 	checkCertificatePEMFunc func(pemData []byte) (notyet bool, daysToStart int64, expired bool, daysToExpire int64, err error),
 	parsePKCSXPrivateKeyPEMFunc func(pemData []byte) (crypto.PrivateKey, error),
+	marshalPKCSXPrivateKeyPEMFunc func(privateKey crypto.PrivateKey) (pemData []byte, err error),
 	tls_X509KeyPair func(certPEMBlock []byte, keyPEMBlock []byte) (tls.Certificate, error), // nolint: revive
 ) (
 	privateKeyVaultVersionResource,
@@ -86,39 +88,41 @@ func (uc *certificatesUseCase) issueCertificate(
 		return "", "", xerrors.Errorf("(*usecase.certificatesUseCase).vaultRepo.GetVaultVersionDataIfExists: privateKeyErr=%v, certificateErr=%w", privateKeyErr, certificateErr)
 	}
 
-	var keyPairIsBroken bool
-	privateKeyPEM, err := nits.X509.MarshalPKCSXPrivateKeyPEM(privateKey)
-	l.Debug(string(privateKeyPEM)) // NOTE: DEBUG
-	if err != nil {
-		l.E().Error(xerrors.Errorf("🚨 private key is broken. tls.X509KeyPair: %w", err))
-		keyPairIsBroken = true
-		renewPrivateKey = true
-	} else {
-		if _, err := tls_X509KeyPair(certificatePEM, privateKeyPEM); err != nil {
-			l.E().Error(xerrors.Errorf("🚨 a pair of certificate and private key is broken. tls.X509KeyPair: %w", err))
+	var privateKeyPEM []byte
+
+	// NOTE: If renewPrivateKey OR NOT privateKeyExists OR NOT certificateExists, skip checking certificate and force to renew certificate
+	if !renewPrivateKey && privateKeyExists && certificateExists { // nolint: nestif
+		var keyPairIsBroken bool
+		privateKeyPEM, err = marshalPKCSXPrivateKeyPEMFunc(privateKey)
+		if err != nil {
+			l.E().Error(xerrors.Errorf("🚨 private key is broken. nits.X509.MarshalPKCSXPrivateKeyPEM: %w", err))
 			keyPairIsBroken = true
-		}
-	}
-
-	if !renewPrivateKey && // NOTE: If renewPrivateKey, skip checking certificate and force to renew certificate
-		privateKeyExists && certificateExists &&
-		!keyPairIsBroken {
-		l.Info("🔬 checking certificate...")
-
-		var notyet bool
-		var expired bool
-		var daysToExpire int64
-		if err := trace.StartFunc(ctx, "nits.X509.CheckCertificatePEM")(func(child context.Context) (err error) {
-			notyet, _, expired, daysToExpire, err = checkCertificatePEMFunc(certificatePEM)
-			return
-		}); err != nil {
-			l.E().Error(xerrors.Errorf("🚨 certificate (%s) is broken. nits.X509.CheckCertificatePEM: %w", certificateVaultVersionResource, err))
-		} else if !notyet && !expired && daysToExpire > thresholdOfDaysToExpire {
-			l.F().Infof("✅ there is still time (%d days) for current certificate to expire. It will not be renewed", daysToExpire)
-			return privateKeyVaultVersionResource, certificateVaultVersionResource, nil // early return
+			renewPrivateKey = true
+		} else {
+			if _, err := tls_X509KeyPair(certificatePEM, privateKeyPEM); err != nil {
+				l.E().Error(xerrors.Errorf("🚨 a pair of certificate and private key is broken. tls.X509KeyPair: %w", err))
+				keyPairIsBroken = true
+			}
 		}
 
-		l.F().Infof("❗️ current certificate has expired or is due to expire in less than %d days. Renew the certificate", thresholdOfDaysToExpire)
+		if !keyPairIsBroken {
+			l.Info("🔬 checking certificate...")
+
+			var notyet bool
+			var expired bool
+			var daysToExpire int64
+			if err := trace.StartFunc(ctx, "nits.X509.CheckCertificatePEM")(func(child context.Context) (err error) {
+				notyet, _, expired, daysToExpire, err = checkCertificatePEMFunc(certificatePEM)
+				return
+			}); err != nil {
+				l.E().Error(xerrors.Errorf("🚨 certificate (%s) is broken. nits.X509.CheckCertificatePEM: %w", certificateVaultVersionResource, err))
+			} else if !notyet && !expired && daysToExpire > thresholdOfDaysToExpire {
+				l.F().Infof("✅ there is still time (%d days) for current certificate to expire. It will not be renewed", daysToExpire)
+				return privateKeyVaultVersionResource, certificateVaultVersionResource, nil // early return
+			}
+
+			l.F().Infof("❗️ current certificate has expired or is due to expire in less than %d days. Renew the certificate", thresholdOfDaysToExpire)
+		}
 	}
 
 	l.Info("🪪 generate certificate...")
