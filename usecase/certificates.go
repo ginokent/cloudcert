@@ -81,9 +81,10 @@ func (uc *certificatesUseCase) issueCertificate(
 
 	l := contexts.GetLogger(ctx)
 
-	certificateExists, certificateVaultVersionResource, certificatePEM, err := uc.vaultRepo.GetVaultVersionDataIfExists(ctx, certificateVaultResource+"/versions/latest")
-	if err != nil {
-		return "", "", xerrors.Errorf("(*usecase.certificatesUseCase).vaultRepo.GetVaultVersionDataIfExists: %w", err)
+	privateKeyExists, privateKeyVaultVersionResource, privateKeyErr := uc.vaultRepo.GetVaultVersionIfExists(ctx, privateKeyVaultResource+"/versions/latest")
+	certificateExists, certificateVaultVersionResource, certificatePEM, certificateErr := uc.vaultRepo.GetVaultVersionDataIfExists(ctx, certificateVaultResource+"/versions/latest")
+	if privateKeyErr != nil || certificateErr != nil {
+		return "", "", xerrors.Errorf("(*usecase.certificatesUseCase).vaultRepo.GetVaultVersionDataIfExists: privateKeyErr=%v, certificateErr=%w", privateKeyErr, certificateErr)
 	}
 
 	var keyPairIsBroken bool
@@ -101,7 +102,7 @@ func (uc *certificatesUseCase) issueCertificate(
 	}
 
 	if !privateKeyRenewed && // NOTE: If renewPrivateKey, skip checking certificate and force to renew certificate
-		certificateExists &&
+		privateKeyExists && certificateExists &&
 		!keyPairIsBroken {
 		l.Info("🔬 checking certificate...")
 
