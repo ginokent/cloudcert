@@ -94,6 +94,7 @@ func (uc *certificatesUseCase) issueCertificate(
 	if !renewPrivateKey && privateKeyExists && certificateExists { // nolint: nestif
 		var keyPairIsBroken bool
 		privateKeyPEM, err = marshalPKCSXPrivateKeyPEMFunc(privateKey)
+		l.F().Debugf("marshalPKCSXPrivateKeyPEMFunc: %s", string(privateKeyPEM))
 		if err != nil {
 			l.E().Error(xerrors.Errorf("🚨 private key is broken. nits.X509.MarshalPKCSXPrivateKeyPEM: %w", err))
 			keyPairIsBroken = true
@@ -135,6 +136,8 @@ func (uc *certificatesUseCase) issueCertificate(
 	if err != nil {
 		return "", "", xerrors.Errorf("(*usecase.certificatesUseCase).letsencryptRepo.IssueCertificate: %w", err)
 	}
+
+	l.F().Debugf("uc.letsencryptRepo.IssueCertificate: %s", string(privateKeyPEM))
 
 	l.Info("🪪 generated certificate")
 

@@ -74,6 +74,8 @@ func (uc *privateKeyUseCase) getPrivateKey(
 		return false, nil, xerrors.Errorf("(*usecase.privateKeyUseCase).vaultRepo.GetVaultVersionDataIfExists: %w", err)
 	}
 
+	l.F().Debugf("uc.vaultRepo.GetVaultVersionDataIfExists: %s", string(privateKeyPEM))
+
 	if privateKeyExists && !renewPrivateKey {
 		privateKey, err = parsePKCSXPrivateKeyPEMFunc(privateKeyPEM)
 		if err == nil {
