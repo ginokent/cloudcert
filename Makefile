@@ -103,8 +103,9 @@ gcloud-run-deploy: GOOGLE_CLOUD_PROJECT ## gcloud run deploy
 .PHONY: build-push-gcloud-run-deploy
 build-push-gcloud-run-deploy: GOOGLE_CLOUD_PROJECT build push gcloud-run-deploy ## docker build push gcloud run deploy
 
-teraform-apply: GOOGLE_CLOUD_PROJECT ## terraform apply
+.PHONY: terraform-apply
+terraform-apply: GOOGLE_CLOUD_PROJECT ## terraform apply
 	GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT} TF_VAR_container_image=${IMAGE_REMOTE} terraform -chdir=terraform/gcloud apply
 
-.PHONY: build-push-teraform-apply
-build-push-teraform-apply: GOOGLE_CLOUD_PROJECT build push teraform-apply
+.PHONY: build-push-terraform-apply
+build-push-terraform-apply: GOOGLE_CLOUD_PROJECT build push terraform-apply ## docker build push terraform apply
