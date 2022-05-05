@@ -6,6 +6,7 @@ linters:
     - exhaustivestruct
     - golint
     - interfacer
+    - ireturn # Too many false negatives.
     - lll
     - maligned
     - nlreturn # ignore "return with no blank line before (nlreturn)"

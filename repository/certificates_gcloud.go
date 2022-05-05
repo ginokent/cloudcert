@@ -63,14 +63,14 @@ func initSingletonGoogleSecretManagerClient(newGoogleSecretManagerClient func(ct
 	return nil
 }
 
-func NewVaultGoogleSecretManagerRepository(ctx context.Context) (VaultRepository, error) { // nolint: ireturn
+func NewVaultGoogleSecretManagerRepository(ctx context.Context) (VaultRepository, error) {
 	_, span := trace.Start(ctx, "repository.NewVaultGoogleSecretManagerRepository")
 	defer span.End()
 
 	return newVaultGoogleSecretManagerRepository(ctx, secretmanager.NewClient)
 }
 
-func newVaultGoogleSecretManagerRepository(ctx context.Context, newGoogleSecretManagerClient func(ctx context.Context, opts ...option.ClientOption) (*secretmanager.Client, error)) (VaultRepository, error) { // nolint: ireturn
+func newVaultGoogleSecretManagerRepository(ctx context.Context, newGoogleSecretManagerClient func(ctx context.Context, opts ...option.ClientOption) (*secretmanager.Client, error)) (VaultRepository, error) {
 	if err := initSingletonGoogleSecretManagerClient(newGoogleSecretManagerClient); err != nil {
 		return nil, xerrors.Errorf("onceInitVaultGoogleSecretManagerRepository: %w", err)
 	}

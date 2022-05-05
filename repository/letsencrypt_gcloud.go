@@ -29,7 +29,7 @@ type letsEncryptGoogleCloudDNSRepository struct {
 	provider             challenge.Provider
 }
 
-func NewLetsEncryptGoogleCloudRepository( // nolint: ireturn
+func NewLetsEncryptGoogleCloudRepository(
 	ctx context.Context,
 	termsOfServiceAgreed bool,
 	email string,
