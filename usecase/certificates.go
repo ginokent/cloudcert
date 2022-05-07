@@ -5,6 +5,7 @@ import (
 	"crypto"
 	"crypto/tls"
 
+	"github.com/go-acme/lego/v4/certcrypto"
 	"github.com/newtstat/cloudacme/contexts"
 	"github.com/newtstat/cloudacme/repository"
 	"github.com/newtstat/cloudacme/trace"
@@ -87,15 +88,16 @@ func (uc *certificatesUseCase) issueCertificate(
 	if privateKeyErr != nil || certificateErr != nil {
 		return "", "", xerrors.Errorf("(*usecase.certificatesUseCase).vaultRepo.GetVaultVersionDataIfExists: privateKeyErr=%v, certificateErr=%w", privateKeyErr, certificateErr)
 	}
+	l.F().Debugf("usecase: uc.vaultRepo.GetVaultVersionIfExists: %s", string(certificatePEM))
 
 	var privateKeyPEM []byte
 
 	// NOTE: If renewPrivateKey OR NOT privateKeyExists OR NOT certificateExists, skip checking certificate and force to renew certificate
 	if !renewPrivateKey && privateKeyExists && certificateExists { // nolint: nestif
 		var keyPairIsBroken bool
-		privateKeyPEM, err = marshalPKCSXPrivateKeyPEMFunc(privateKey)
-		l.F().Debugf("marshalPKCSXPrivateKeyPEMFunc: %s", string(privateKeyPEM))
-		if err != nil {
+		privateKeyPEM := certcrypto.PEMEncode(privateKey)
+		l.F().Debugf("usecase: certcrypto.PEMEncode: %s", string(privateKeyPEM))
+		if privateKeyPEM == nil {
 			l.E().Error(xerrors.Errorf("🚨 private key is broken. nits.X509.MarshalPKCSXPrivateKeyPEM: %w", err))
 			keyPairIsBroken = true
 			renewPrivateKey = true
@@ -137,7 +139,7 @@ func (uc *certificatesUseCase) issueCertificate(
 		return "", "", xerrors.Errorf("(*usecase.certificatesUseCase).letsencryptRepo.IssueCertificate: %w", err)
 	}
 
-	l.F().Debugf("uc.letsencryptRepo.IssueCertificate: %s", string(privateKeyPEM))
+	// l.F().Debugf("usecase: uc.letsencryptRepo.IssueCertificate: %s", string(privateKeyPEM))
 
 	l.Info("🪪 generated certificate")
 

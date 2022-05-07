@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto"
 
+	"github.com/go-acme/lego/v4/certcrypto"
 	"github.com/newtstat/cloudacme/contexts"
 	"github.com/newtstat/cloudacme/repository"
 	"github.com/newtstat/cloudacme/trace"
@@ -74,15 +75,15 @@ func (uc *privateKeyUseCase) getPrivateKey(
 		return false, nil, xerrors.Errorf("(*usecase.privateKeyUseCase).vaultRepo.GetVaultVersionDataIfExists: %w", err)
 	}
 
-	l.F().Debugf("uc.vaultRepo.GetVaultVersionDataIfExists: %s", string(privateKeyPEM))
+	// l.F().Debugf("usecase: uc.vaultRepo.GetVaultVersionDataIfExists: %s", string(privateKeyPEM))
 
 	if privateKeyExists && !renewPrivateKey {
-		privateKey, err = parsePKCSXPrivateKeyPEMFunc(privateKeyPEM)
+		privateKey, err = certcrypto.ParsePEMPrivateKey(privateKeyPEM)
 		if err == nil {
 			return false, privateKey, nil
 		}
 
-		l.E().Error(xerrors.Errorf("🚨 private key is broken: nits.X509.ParsePKCSXPrivateKeyPEM: %v", err))
+		l.E().Error(xerrors.Errorf("🚨 private key is broken: certcrypto.ParsePEMPrivateKey: %v", err))
 	}
 
 	// NOTE: if !privateKeyExists OR renewPrivateKey, always generate private key

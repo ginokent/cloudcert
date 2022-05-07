@@ -61,6 +61,9 @@ func (*CertificatesController) issue(
 		return nil, xerrors.Errorf("(usecase.PrivateKeyUseCase).GetPrivateKey: %w", err)
 	}
 
+	// privateKeyPEM := certcrypto.PEMEncode(privateKey)
+	// l.F().Debugf("controller: privateKeyUsecase.GetPrivateKey: %s", string(privateKeyPEM))
+
 	var letsencryptRepo repository.LetsEncryptRepository
 	switch req.GetDnsProvider() {
 	case cloudacme.IssueCertificateRequest_gcloud.String():
