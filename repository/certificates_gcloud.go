@@ -2,17 +2,16 @@ package repository
 
 import (
 	"context"
-	"errors"
 	"strings"
 	"sync"
 	"sync/atomic"
 
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
+	"github.com/cockroachdb/errors"
 	"github.com/googleapis/gax-go"
 	"github.com/newtstat/cloudacme/config"
 	"github.com/newtstat/cloudacme/trace"
 	"go.opentelemetry.io/otel/attribute"
-	"golang.org/x/xerrors"
 	"google.golang.org/api/option"
 	secretmanagerpb "google.golang.org/genproto/googleapis/cloud/secretmanager/v1"
 	"google.golang.org/grpc/codes"
@@ -53,7 +52,7 @@ func initSingletonGoogleSecretManagerClient(newGoogleSecretManagerClient func(ct
 		if singletonGoogleSecretManagerClientAtomic == 0 {
 			client, err := newGoogleSecretManagerClient(context.Background())
 			if err != nil {
-				return xerrors.Errorf("secretmanager.NewClient: %w", err)
+				return errors.Errorf("secretmanager.NewClient: %w", err)
 			}
 			singletonGoogleSecretManagerClient = client
 			atomic.StoreUint32(&singletonGoogleSecretManagerClientAtomic, 1)
@@ -72,7 +71,7 @@ func NewVaultGoogleSecretManagerRepository(ctx context.Context) (VaultRepository
 
 func newVaultGoogleSecretManagerRepository(ctx context.Context, newGoogleSecretManagerClient func(ctx context.Context, opts ...option.ClientOption) (*secretmanager.Client, error)) (VaultRepository, error) {
 	if err := initSingletonGoogleSecretManagerClient(newGoogleSecretManagerClient); err != nil {
-		return nil, xerrors.Errorf("onceInitVaultGoogleSecretManagerRepository: %w", err)
+		return nil, errors.Errorf("onceInitVaultGoogleSecretManagerRepository: %w", err)
 	}
 
 	return &vaultGoogleSecretManagerRepository{
@@ -103,7 +102,7 @@ func (repo *vaultGoogleSecretManagerRepository) GetVaultIfExists(ctx context.Con
 		}
 		return
 	}); err != nil {
-		return false, "", xerrors.Errorf("(*repository.vaultGoogleSecretManagerRepository).client.GetSecret: %w", err)
+		return false, "", errors.Errorf("(*repository.vaultGoogleSecretManagerRepository).client.GetSecret: %w", err)
 	}
 
 	span.SetAttributes(attribute.Bool("exists", exists))
@@ -118,7 +117,7 @@ func (repo *vaultGoogleSecretManagerRepository) CreateVaultIfNotExists(ctx conte
 
 	exists, _, err := repo.GetVaultIfExists(ctx, vaultResource)
 	if err != nil {
-		return xerrors.Errorf("(*repository.vaultGoogleSecretManagerRepository).ExistsVault: %w", err)
+		return errors.Errorf("(*repository.vaultGoogleSecretManagerRepository).ExistsVault: %w", err)
 	}
 
 	if exists {
@@ -127,7 +126,7 @@ func (repo *vaultGoogleSecretManagerRepository) CreateVaultIfNotExists(ctx conte
 
 	secretParent, vaultID, found := strings.Cut(vaultResource, "/secrets/")
 	if !found {
-		return xerrors.Errorf("secretResource=%s: %w", vaultResource, ErrInvalidVaultResource)
+		return errors.Errorf("secretResource=%s: %w", vaultResource, ErrInvalidVaultResource)
 	}
 
 	req := &secretmanagerpb.CreateSecretRequest{
@@ -145,7 +144,7 @@ func (repo *vaultGoogleSecretManagerRepository) CreateVaultIfNotExists(ctx conte
 		_, err = repo.client.CreateSecret(child, req)
 		return
 	}); err != nil {
-		return xerrors.Errorf("(*repository.vaultGoogleSecretManagerRepository).client.CreateSecret: %w", err)
+		return errors.Errorf("(*repository.vaultGoogleSecretManagerRepository).client.CreateSecret: %w", err)
 	}
 
 	span.SetAttributes(attribute.String("vaultResource", vaultResource))
@@ -169,7 +168,7 @@ func (repo *vaultGoogleSecretManagerRepository) LockVault(ctx context.Context, t
 		})
 		return
 	}); err != nil {
-		return xerrors.Errorf("(*repository.vaultGoogleSecretManagerRepository).client.GetSecret: %w", err)
+		return errors.Errorf("(*repository.vaultGoogleSecretManagerRepository).client.GetSecret: %w", err)
 	}
 
 	if secret.Labels == nil {
@@ -196,7 +195,7 @@ func (repo *vaultGoogleSecretManagerRepository) LockVault(ctx context.Context, t
 		})
 		return
 	}); err != nil {
-		return xerrors.Errorf("(*repository.vaultGoogleSecretManagerRepository).client.UpdateSecret: %w", err)
+		return errors.Errorf("(*repository.vaultGoogleSecretManagerRepository).client.UpdateSecret: %w", err)
 	}
 
 	return nil
@@ -218,7 +217,7 @@ func (repo *vaultGoogleSecretManagerRepository) UnlockVault(ctx context.Context,
 		})
 		return
 	}); err != nil {
-		return xerrors.Errorf("(*repository.vaultGoogleSecretManagerRepository).client.GetSecret: %w", err)
+		return errors.Errorf("(*repository.vaultGoogleSecretManagerRepository).client.GetSecret: %w", err)
 	}
 
 	if secret.Labels == nil {
@@ -236,7 +235,7 @@ func (repo *vaultGoogleSecretManagerRepository) UnlockVault(ctx context.Context,
 		})
 		return
 	}); err != nil {
-		return xerrors.Errorf("(*repository.vaultGoogleSecretManagerRepository).client.UpdateSecret: %w", err)
+		return errors.Errorf("(*repository.vaultGoogleSecretManagerRepository).client.UpdateSecret: %w", err)
 	}
 
 	return nil
@@ -265,7 +264,7 @@ func (repo *vaultGoogleSecretManagerRepository) GetVaultVersionIfExists(ctx cont
 		}
 		return
 	}); err != nil {
-		return false, "", xerrors.Errorf("(*repository.vaultGoogleSecretManagerRepository).client.GetSecretVersion: %w", err)
+		return false, "", errors.Errorf("(*repository.vaultGoogleSecretManagerRepository).client.GetSecretVersion: %w", err)
 	}
 
 	return exists, version, nil
@@ -296,7 +295,7 @@ func (repo *vaultGoogleSecretManagerRepository) GetVaultVersionDataIfExists(ctx 
 		}
 		return
 	}); err != nil {
-		return false, "", nil, xerrors.Errorf("(*repository.vaultGoogleSecretManagerRepository).client.AccessSecretVersion: %w", err)
+		return false, "", nil, errors.Errorf("(*repository.vaultGoogleSecretManagerRepository).client.AccessSecretVersion: %w", err)
 	}
 
 	span.SetAttributes(attribute.String("vaultVersionResource", vaultVersionResource))
@@ -320,11 +319,11 @@ func (repo *vaultGoogleSecretManagerRepository) AddVaultVersion(ctx context.Cont
 	if err := trace.StartFunc(ctx, "(*repository.vaultGoogleSecretManagerRepository).client.AddSecretVersion")(func(child context.Context) (err error) {
 		secretVersion, err = repo.client.AddSecretVersion(child, req)
 		if stat, _ := status.FromError(err); stat.Code() == codes.NotFound {
-			return xerrors.Errorf("(*repository.vaultGoogleSecretManagerRepository).client.AddSecretVersion: %w", err)
+			return errors.Errorf("(*repository.vaultGoogleSecretManagerRepository).client.AddSecretVersion: %w", err)
 		}
 		return
 	}); err != nil {
-		return "", xerrors.Errorf("(*repository.vaultGoogleSecretManagerRepository).client.AddSecretVersion: %w", err)
+		return "", errors.Errorf("(*repository.vaultGoogleSecretManagerRepository).client.AddSecretVersion: %w", err)
 	}
 
 	span.SetAttributes(attribute.String("vaultVersionResource", secretVersion.Name))

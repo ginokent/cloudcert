@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/cockroachdb/errors"
 	legocert "github.com/go-acme/lego/v4/certificate"
 	"github.com/go-acme/lego/v4/challenge"
 	"github.com/go-acme/lego/v4/challenge/dns01"
@@ -16,7 +17,6 @@ import (
 	"github.com/go-acme/lego/v4/registration"
 	"github.com/newtstat/cloudacme/trace"
 	"golang.org/x/oauth2/google"
-	"golang.org/x/xerrors"
 	"google.golang.org/api/dns/v1"
 )
 
@@ -58,8 +58,8 @@ func newLetsEncryptGoogleCloudRepository(
 	googleCloudProject string,
 	staging bool,
 	logWriter io.Writer,
-	google_DefaultClient func(ctx context.Context, scope ...string) (*http.Client, error), // nolint: revive
-	gcloud_NewDNSProviderConfig func(config *gcloud.Config) (*gcloud.DNSProvider, error), // nolint: revive
+	google_DefaultClient func(ctx context.Context, scope ...string) (*http.Client, error), // nolint: revive,stylecheck
+	gcloud_NewDNSProviderConfig func(config *gcloud.Config) (*gcloud.DNSProvider, error), // nolint: revive,stylecheck
 ) (*letsEncryptGoogleCloudDNSRepository, error) {
 	ctx, span := trace.Start(ctx, "repository.NewLetsEncryptGoogleCloudRepository")
 	defer span.End()
@@ -73,7 +73,7 @@ func newLetsEncryptGoogleCloudRepository(
 	}
 
 	if email == "" {
-		return nil, xerrors.Errorf("email: %w", ErrEmailIsEmpty)
+		return nil, errors.Errorf("email: %w", ErrEmailIsEmpty)
 	}
 
 	var client *http.Client
@@ -81,7 +81,7 @@ func newLetsEncryptGoogleCloudRepository(
 		client, err = google_DefaultClient(ctx, dns.NdevClouddnsReadwriteScope)
 		return
 	}); err != nil {
-		return nil, xerrors.Errorf("google.DefaultClient: googlecloud: unable to get Google Cloud client: %w", err)
+		return nil, errors.Errorf("google.DefaultClient: googlecloud: unable to get Google Cloud client: %w", err)
 	}
 
 	config := gcloud.NewDefaultConfig()
@@ -93,7 +93,7 @@ func newLetsEncryptGoogleCloudRepository(
 		dnsProvider, err = gcloud_NewDNSProviderConfig(config)
 		return
 	}); err != nil {
-		return nil, xerrors.Errorf("gcloud.NewDNSProviderConfig: %w", err)
+		return nil, errors.Errorf("gcloud.NewDNSProviderConfig: %w", err)
 	}
 
 	return &letsEncryptGoogleCloudDNSRepository{
@@ -120,7 +120,7 @@ func (repo *letsEncryptGoogleCloudDNSRepository) newClient(ctx context.Context, 
 		legoClient, err = lego.NewClient(legoConfig)
 		return
 	}); err != nil {
-		return nil, nil, xerrors.Errorf("lego.NewClient: %w", err)
+		return nil, nil, errors.Errorf("lego.NewClient: %w", err)
 	}
 
 	return user, legoClient, nil
@@ -130,7 +130,7 @@ func (repo *letsEncryptGoogleCloudDNSRepository) newClient(ctx context.Context, 
 func (repo *letsEncryptGoogleCloudDNSRepository) IssueCertificate(ctx context.Context, privatekey crypto.PrivateKey, domains []string) (privateKeyPEM, certificatePEM, issuerCertificate, csr []byte, err error) {
 	user, legoClient, err := repo.newClient(ctx, privatekey)
 	if err != nil {
-		return nil, nil, nil, nil, xerrors.Errorf("lego.NewClient: %w", err)
+		return nil, nil, nil, nil, errors.Errorf("lego.NewClient: %w", err)
 	}
 
 	return repo.issueCertificate(
@@ -176,7 +176,7 @@ func (repo *letsEncryptGoogleCloudDNSRepository) issueCertificate(
 		err = challenge.SetDNS01Provider(repo.provider)
 		return
 	}); err != nil {
-		return nil, nil, nil, nil, xerrors.Errorf("(*resolver.SolverManager).SetDNS01Provider: %w", err)
+		return nil, nil, nil, nil, errors.Errorf("(*resolver.SolverManager).SetDNS01Provider: %w", err)
 	}
 
 	var registrationResource *registration.Resource
@@ -184,7 +184,7 @@ func (repo *letsEncryptGoogleCloudDNSRepository) issueCertificate(
 		registrationResource, err = reg.Register(registration.RegisterOptions{TermsOfServiceAgreed: termsOfServiceAgreed})
 		return
 	}); err != nil {
-		return nil, nil, nil, nil, xerrors.Errorf("(*registration.Registrar).Register: %w", err)
+		return nil, nil, nil, nil, errors.Errorf("(*registration.Registrar).Register: %w", err)
 	}
 
 	user.registration = registrationResource
@@ -199,7 +199,7 @@ func (repo *letsEncryptGoogleCloudDNSRepository) issueCertificate(
 		certificateResource, err = cert.Obtain(request)
 		return
 	}); err != nil {
-		return nil, nil, nil, nil, xerrors.Errorf("(*legocert.Certifier).Obtain: %w", err)
+		return nil, nil, nil, nil, errors.Errorf("(*legocert.Certifier).Obtain: %w", err)
 	}
 
 	return certificateResource.PrivateKey, certificateResource.Certificate, certificateResource.IssuerCertificate, certificateResource.CSR, nil

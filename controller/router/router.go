@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/cockroachdb/errors"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
@@ -20,7 +21,6 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
-	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
@@ -70,7 +70,7 @@ func NewGRPCGatewayRouter(ctx context.Context, grpcServerEndpoint string, l *rec
 		for _, f := range fs {
 			if err := f(ctx, mux, endpoint, opts); err != nil {
 				fv := reflect.ValueOf(f)
-				return xerrors.Errorf("%s: %w", runtime.FuncForPC(fv.Pointer()).Name(), err)
+				return errors.Errorf("%s: %w", runtime.FuncForPC(fv.Pointer()).Name(), err)
 			}
 		}
 		return nil
@@ -81,7 +81,7 @@ func NewGRPCGatewayRouter(ctx context.Context, grpcServerEndpoint string, l *rec
 		cloudacme.RegisterTestAPIHandlerFromEndpoint,
 		cloudacme.RegisterCertificatesHandlerFromEndpoint,
 	); err != nil {
-		return nil, xerrors.Errorf("cloudacme.RegisterTestAPIHandlerFromEndpoint: %w", err)
+		return nil, errors.Errorf("cloudacme.RegisterTestAPIHandlerFromEndpoint: %w", err)
 	}
 
 	middlewares := nits.HTTP.AddMiddlewares(

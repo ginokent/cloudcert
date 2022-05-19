@@ -94,8 +94,8 @@ func Test_newLetsEncryptGoogleCloudRepository(t *testing.T) {
 		email                       string
 		googleCloudProject          string
 		staging                     bool
-		google_DefaultClient        func(ctx context.Context, scope ...string) (*http.Client, error) // nolint: revive
-		gcloud_NewDNSProviderConfig func(config *gcloud.Config) (*gcloud.DNSProvider, error)         // nolint: revive
+		google_DefaultClient        func(ctx context.Context, scope ...string) (*http.Client, error) // nolint: revive,stylecheck
+		gcloud_NewDNSProviderConfig func(config *gcloud.Config) (*gcloud.DNSProvider, error)         // nolint: revive,stylecheck
 	}
 	tests := []struct {
 		name    string

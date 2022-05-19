@@ -7,11 +7,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cockroachdb/errors"
 	"github.com/newtstat/cloudacme/controller/router"
 	"github.com/rec-logger/rec.go" // NOTE: github.com/open-telemetry/opentelemetry-go-contrib/tree/main/instrumentation/google.golang.org/grpc/otelgrpc
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
-	"golang.org/x/xerrors"
 )
 
 func StartGRPCServerWithGatewayAsync(ctx context.Context, address string, shutdownTimeout time.Duration, l *rec.Logger) (shutdown func(), errChan <-chan error) {
@@ -19,7 +19,7 @@ func StartGRPCServerWithGatewayAsync(ctx context.Context, address string, shutdo
 
 	grpcGatewayRouter, err := router.NewGRPCGatewayRouter(ctx, address, l)
 	if err != nil {
-		errCh <- xerrors.Errorf("router.NewGRPCGatewayRouter: %w", err)
+		errCh <- errors.Errorf("router.NewGRPCGatewayRouter: %w", err)
 		return func() {}, errCh
 	}
 
@@ -28,7 +28,7 @@ func StartGRPCServerWithGatewayAsync(ctx context.Context, address string, shutdo
 
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
-		errCh <- xerrors.Errorf("net.Listen: %w", err)
+		errCh <- errors.Errorf("net.Listen: %w", err)
 		return func() {}, errCh
 	}
 
@@ -51,11 +51,11 @@ func StartGRPCServerWithGatewayAsync(ctx context.Context, address string, shutdo
 		defer l.F().Infof("🔇 shutdown gRPC Server and gRPC-Gateway: %s", listener.Addr().String())
 
 		if err := server.Serve(listener); err != nil {
-			errCh <- xerrors.Errorf("http.Serve: %w", err)
+			errCh <- errors.Errorf("http.Serve: %w", err)
 			return
 		}
 		errCh <- nil
-		return
+		return // nolint: gosimple
 	}()
 
 	shutdown = func() {
@@ -64,7 +64,7 @@ func StartGRPCServerWithGatewayAsync(ctx context.Context, address string, shutdo
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 		defer cancel()
 		if err := server.Shutdown(shutdownCtx); err != nil {
-			l.E().Error(xerrors.Errorf("server.Shutdown: %w", err))
+			l.E().Error(errors.Errorf("server.Shutdown: %w", err))
 			return
 		}
 	}

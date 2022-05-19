@@ -5,6 +5,7 @@ go 1.18
 require (
 	cloud.google.com/go/secretmanager v1.4.0
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.4.0
+	github.com/cockroachdb/errors v1.9.0
 	github.com/envoyproxy/protoc-gen-validate v0.6.7
 	github.com/go-acme/lego/v4 v4.6.0
 	github.com/googleapis/gax-go v1.0.3
@@ -20,7 +21,6 @@ require (
 	go.opentelemetry.io/otel/trace v1.6.3
 	golang.org/x/net v0.0.0-20220421235706-1d1ef9303861
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
-	golang.org/x/xerrors v0.0.0-20220411194840-2f41105eb62f
 	google.golang.org/api v0.75.0
 	google.golang.org/genproto v0.0.0-20220422154200-b37d22cd5731
 	google.golang.org/grpc v1.46.0
@@ -35,17 +35,25 @@ require (
 	cloud.google.com/go/trace v1.2.0 // indirect
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
+	github.com/cockroachdb/logtags v0.0.0-20211118104740-dabe8e521a4f // indirect
+	github.com/cockroachdb/redact v1.1.3 // indirect
 	github.com/felixge/httpsnoop v1.0.2 // indirect
+	github.com/getsentry/sentry-go v0.12.0 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/glog v1.0.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/googleapis/gax-go/v2 v2.3.0 // indirect
 	github.com/iancoleman/strcase v0.2.0 // indirect
+	github.com/kr/pretty v0.3.0 // indirect
+	github.com/kr/text v0.2.0 // indirect
 	github.com/lyft/protoc-gen-star v0.6.0 // indirect
 	github.com/miekg/dns v1.1.43 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
+	github.com/rogpeppe/go-internal v1.8.1 // indirect
 	github.com/spf13/afero v1.8.2 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	go.opentelemetry.io/otel/metric v0.28.0 // indirect
@@ -56,6 +64,7 @@ require (
 	golang.org/x/sys v0.0.0-20220422013727-9388b58f7150 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.10 // indirect
+	golang.org/x/xerrors v0.0.0-20220411194840-2f41105eb62f // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

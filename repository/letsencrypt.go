@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 	"crypto"
-	"errors"
 
+	"github.com/cockroachdb/errors"
 	"github.com/go-acme/lego/v4/registration"
 )
 

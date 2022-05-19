@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/cockroachdb/errors"
 	"github.com/newtstat/cloudacme/contexts"
 	"github.com/rec-logger/rec.go"
-	"golang.org/x/xerrors"
 )
 
 type requestBodyBuffer struct {
@@ -33,7 +33,7 @@ func RequestBodyBufferMiddleware() func(http.Handler) http.Handler {
 			buf := requestBodyBufferPool.Get().(*requestBodyBuffer)
 
 			if _, err := buf.Buffer.ReadFrom(r.Body); err != nil {
-				l.E().Error(xerrors.Errorf("buf.Buffer.ReadFrom: %w", err))
+				l.E().Error(errors.Errorf("buf.Buffer.ReadFrom: %w", err))
 			}
 
 			r.Body = io.NopCloser(buf.Buffer)

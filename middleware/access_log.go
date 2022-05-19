@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/cockroachdb/errors"
 	"github.com/rec-logger/rec.go"
-	"golang.org/x/xerrors"
 )
 
 type loggerResponseWriter struct {
@@ -54,7 +54,7 @@ func (lrw *loggerResponseWriter) StatusCode() int {
 
 func (lrw *loggerResponseWriter) Write(p []byte) (int, error) {
 	if _, err := io.MultiWriter(lrw.responseBodyBuffer.Buffer, lrw.ResponseWriter).Write(p); err != nil {
-		return 0, xerrors.Errorf("io.MultiWriter.Write: %w", err)
+		return 0, errors.Errorf("io.MultiWriter.Write: %w", err)
 	}
 
 	return len(p), nil

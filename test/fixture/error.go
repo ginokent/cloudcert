@@ -1,5 +1,5 @@
 package fixture
 
-import "errors"
+import "github.com/cockroachdb/errors"
 
 var ErrTestError = errors.New("test error")

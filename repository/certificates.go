@@ -2,7 +2,8 @@ package repository
 
 import (
 	"context"
-	"errors"
+
+	"github.com/cockroachdb/errors"
 )
 
 var ErrInvalidVaultResource = errors.New("invalid vault resource")

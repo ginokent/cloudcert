@@ -3,16 +3,18 @@ linters:
   enable-all: true
   disable:
     - contextcheck
+    - exhaustruct
     - exhaustivestruct
     - golint
     - interfacer
     - ireturn # Too many false negatives.
     - lll
     - maligned
-    - nlreturn # ignore "return with no blank line before (nlreturn)"
+    - nlreturn # ignore "return with no blank line before"
+    - nonamedreturns # unnecessary
     - scopelint
     - varnamelen
-    - wsl # ignore "declarations should never be cuddled (wsl)"
+    - wsl # ignore "declarations should never be cuddled"
 
 linters-settings:
   varnamelen:
@@ -20,11 +22,12 @@ linters-settings:
       - l *Logger
       - l *rec.Logger
       - rw http.ResponseWriter
+      - w http.ResponseWriter
       - r *http.Request
   wrapcheck:
     ignoreSigs:
       - func fmt.Errorf(format string, a ...any) error
-      - func golang.org/x/xerrors.Errorf(format string, a ...interface{}) error
+      - func github.com/cockroachdb/errors.Errorf(format string, args ...interface{}) error
       - func (*github.com/rec-logger/rec.go.errorReturner).Err() error
 
 issues:
@@ -34,7 +37,6 @@ issues:
         - containedctx
         - cyclop
         - dupl
-        - exhaustivestruct
         - funlen
         - gochecknoglobals
         - gocognit
@@ -42,6 +44,5 @@ issues:
         - goerr113
         - gomnd
         - maintidx
-        - nlreturn
         - noctx
         - varnamelen

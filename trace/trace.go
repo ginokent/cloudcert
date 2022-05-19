@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	gcloudtrace "github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace"
+	"github.com/cockroachdb/errors"
 	"github.com/newtstat/cloudacme/config"
 	"github.com/rec-logger/rec.go"
 	"go.opentelemetry.io/otel"
@@ -18,7 +19,6 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.7.0"
 	"go.opentelemetry.io/otel/trace"
-	"golang.org/x/xerrors"
 )
 
 // NewExporter TODO
@@ -28,12 +28,12 @@ func NewExporter() (exporter sdktrace.SpanExporter, err error) {
 	case "gcloud":
 		exporter, err = gcloudtrace.New(gcloudtrace.WithProjectID(config.GoogleCloudProject()))
 		if err != nil {
-			return nil, xerrors.Errorf("gcloudtrace.New: %w", err)
+			return nil, errors.Errorf("gcloudtrace.New: %w", err)
 		}
 	case "stdout":
 		exporter, err = stdouttrace.New(stdouttrace.WithWriter(os.Stdout))
 		if err != nil {
-			return nil, xerrors.Errorf("stdouttrace.New: %w", err)
+			return nil, errors.Errorf("stdouttrace.New: %w", err)
 		}
 	default:
 		exporter = nil
@@ -69,7 +69,7 @@ func SetupTracerProvider(l *rec.Logger) (shutdown func(), err error) {
 
 	exporter, err := NewExporter()
 	if err != nil {
-		return nil, xerrors.Errorf("NewExporter: %w", err)
+		return nil, errors.Errorf("NewExporter: %w", err)
 	}
 
 	if exporter == nil {

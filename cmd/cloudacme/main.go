@@ -8,11 +8,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/cockroachdb/errors"
 	"github.com/newtstat/cloudacme/config"
 	"github.com/newtstat/cloudacme/entrypoint"
 	"github.com/newtstat/cloudacme/trace"
 	"github.com/rec-logger/rec.go" // NOTE: github.com/open-telemetry/opentelemetry-go-contrib/tree/main/instrumentation/google.golang.org/grpc/otelgrpc
-	"golang.org/x/xerrors"
 )
 
 func main() {
@@ -37,7 +37,7 @@ func run(shutdownChan <-chan os.Signal, l *rec.Logger) error {
 
 	cleanup, err := trace.SetupTracerProvider(l)
 	if err != nil {
-		return xerrors.Errorf("trace.SetupTracerProvider: %w", err)
+		return errors.Errorf("trace.SetupTracerProvider: %w", err)
 	}
 	defer cleanup()
 
@@ -52,7 +52,7 @@ func run(shutdownChan <-chan os.Signal, l *rec.Logger) error {
 		l.F().Infof("catch the signal: %s", sig)
 	case err := <-errCh:
 		if err != nil {
-			return xerrors.Errorf("entrypoint.StartGRPCGatewayAsync: %w", err)
+			return errors.Errorf("entrypoint.StartGRPCGatewayAsync: %w", err)
 		}
 	}
 

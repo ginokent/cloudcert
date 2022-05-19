@@ -4,12 +4,12 @@ import (
 	"context"
 	"crypto"
 
+	"github.com/cockroachdb/errors"
 	"github.com/go-acme/lego/v4/certcrypto"
 	"github.com/newtstat/cloudacme/contexts"
 	"github.com/newtstat/cloudacme/repository"
 	"github.com/newtstat/cloudacme/trace"
 	"github.com/newtstat/nits.go"
-	"golang.org/x/xerrors"
 )
 
 type PrivateKeyUseCase interface {
@@ -72,7 +72,7 @@ func (uc *privateKeyUseCase) getPrivateKey(
 	var privateKeyPEM []byte
 	privateKeyExists, _, privateKeyPEM, err = uc.vaultRepo.GetVaultVersionDataIfExists(ctx, privateKeyVaultResource+"/versions/latest")
 	if err != nil {
-		return false, nil, xerrors.Errorf("(*usecase.privateKeyUseCase).vaultRepo.GetVaultVersionDataIfExists: %w", err)
+		return false, nil, errors.Errorf("(*usecase.privateKeyUseCase).vaultRepo.GetVaultVersionDataIfExists: %w", err)
 	}
 
 	// l.F().Debugf("usecase: uc.vaultRepo.GetVaultVersionDataIfExists: %s", string(privateKeyPEM))
@@ -83,7 +83,7 @@ func (uc *privateKeyUseCase) getPrivateKey(
 			return false, privateKey, nil
 		}
 
-		l.E().Error(xerrors.Errorf("🚨 private key is broken: certcrypto.ParsePEMPrivateKey: %v", err))
+		l.E().Error(errors.Errorf("🚨 private key is broken: certcrypto.ParsePEMPrivateKey: %v", err))
 	}
 
 	// NOTE: if !privateKeyExists OR renewPrivateKey, always generate private key
@@ -97,11 +97,11 @@ func (uc *privateKeyUseCase) getPrivateKey(
 		privateKey, err = generateKeyFunc(keyAlgorithm)
 		return
 	}); err != nil {
-		return false, nil, xerrors.Errorf("nits.Crypto.GenerateKey: %w", err)
+		return false, nil, errors.Errorf("nits.Crypto.GenerateKey: %w", err)
 	}
 
 	if err := uc.vaultRepo.CreateVaultIfNotExists(ctx, privateKeyVaultResource); err != nil {
-		return false, nil, xerrors.Errorf("(*usecase.privateKeyUseCase).vaultRepo.CreateVaultIfNotExists: %w", err)
+		return false, nil, errors.Errorf("(*usecase.privateKeyUseCase).vaultRepo.CreateVaultIfNotExists: %w", err)
 	}
 
 	l.F().Infof("🔐 generated %s private key", keyAlgorithm)
@@ -117,7 +117,7 @@ func (uc *privateKeyUseCase) Lock(ctx context.Context, privateKeyVaultResource, 
 	certificateErr := uc.vaultRepo.LockVault(ctx, certificateVaultResource)
 
 	if privateKeyErr != nil || certificateErr != nil {
-		return xerrors.Errorf("(*usecase.privateKeyUseCase).vaultRepo.LockVault: %v: privateKey=%v certificate=%v", repository.ErrFailedToAcquireLock, privateKeyErr, certificateErr)
+		return errors.Errorf("(*usecase.privateKeyUseCase).vaultRepo.LockVault: %v: privateKey=%v certificate=%v", repository.ErrFailedToAcquireLock, privateKeyErr, certificateErr)
 	}
 
 	return nil
@@ -131,7 +131,7 @@ func (uc *privateKeyUseCase) Unlock(ctx context.Context, privateKeyVaultResource
 	certificateErr := uc.vaultRepo.UnlockVault(ctx, certificateVaultResource)
 
 	if privateKeyErr != nil || certificateErr != nil {
-		return xerrors.Errorf("(*usecase.privateKeyUseCase).vaultRepo.LockVault: privateKey=%v certificate=%v", privateKeyErr, certificateErr)
+		return errors.Errorf("(*usecase.privateKeyUseCase).vaultRepo.LockVault: privateKey=%v certificate=%v", privateKeyErr, certificateErr)
 	}
 
 	return nil

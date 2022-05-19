@@ -98,7 +98,7 @@ func Test_certificatesUseCase_issueCertificate(t *testing.T) {
 		checkCertificatePEMFunc       func(pemData []byte) (notyet bool, daysToStart int64, expired bool, daysToExpire int64, err error)
 		parsePKCSXPrivateKeyPEMFunc   func(pemData []byte) (crypto.PrivateKey, error)
 		marshalPKCSXPrivateKeyPEMFunc func(privateKey crypto.PrivateKey) (pemData []byte, err error)
-		tls_X509KeyPair               func(certPEMBlock []byte, keyPEMBlock []byte) (tls.Certificate, error) // nolint: revive
+		tls_X509KeyPair               func(certPEMBlock []byte, keyPEMBlock []byte) (tls.Certificate, error) // nolint: revive,stylecheck
 	}
 	tests := []struct {
 		name                                string

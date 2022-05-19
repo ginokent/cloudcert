@@ -5,12 +5,12 @@ import (
 	"io"
 	"os"
 
+	"github.com/cockroachdb/errors"
 	"github.com/newtstat/cloudacme/contexts"
 	"github.com/newtstat/cloudacme/proto/generated/go/v1/cloudacme"
 	"github.com/newtstat/cloudacme/repository"
 	"github.com/newtstat/cloudacme/trace"
 	"github.com/newtstat/cloudacme/usecase"
-	"golang.org/x/xerrors"
 )
 
 type CertificatesController struct {
@@ -41,24 +41,24 @@ func (*CertificatesController) issue(
 	case cloudacme.IssueCertificateRequest_gcloud.String():
 		vaultRepo, err = newVaultGoogleSecretManagerRepository(ctx)
 		if err != nil {
-			return nil, xerrors.Errorf("repository.NewVaultGoogleSecretManagerRepository: %w", err)
+			return nil, errors.Errorf("repository.NewVaultGoogleSecretManagerRepository: %w", err)
 		}
 	default:
-		return nil, xerrors.Errorf("provider=\"%s\": %w", req.GetVaultProvider(), err)
+		return nil, errors.Errorf("provider=\"%s\": %w", req.GetVaultProvider(), err)
 	}
 
 	privateKeyUsecase := usecase.NewPrivateKeyUsecase(vaultRepo)
 	if err := privateKeyUsecase.Lock(ctx, req.PrivateKeyVaultResource, req.CertificateVaultResource); err != nil {
-		return nil, xerrors.Errorf("(usecase.PrivateKeyUseCase).Lock: %w", err)
+		return nil, errors.Errorf("(usecase.PrivateKeyUseCase).Lock: %w", err)
 	}
 	defer func() {
 		if err := privateKeyUsecase.Unlock(ctx, req.PrivateKeyVaultResource, req.CertificateVaultResource); err != nil {
-			l.E().Error(xerrors.Errorf("(usecase.PrivateKeyUseCase).Lock: %w", err))
+			l.E().Error(errors.Errorf("(usecase.PrivateKeyUseCase).Lock: %w", err))
 		}
 	}()
 	renewPrivateKey, privateKey, err := privateKeyUsecase.GetPrivateKey(ctx, req.GetPrivateKeyVaultResource(), req.GetRenewPrivateKey(), req.GetKeyAlgorithm())
 	if err != nil {
-		return nil, xerrors.Errorf("(usecase.PrivateKeyUseCase).GetPrivateKey: %w", err)
+		return nil, errors.Errorf("(usecase.PrivateKeyUseCase).GetPrivateKey: %w", err)
 	}
 
 	// privateKeyPEM := certcrypto.PEMEncode(privateKey)
@@ -69,17 +69,17 @@ func (*CertificatesController) issue(
 	case cloudacme.IssueCertificateRequest_gcloud.String():
 		letsencryptRepo, err = newLetsEncryptGoogleCloudRepository(ctx, req.GetTermsOfServiceAgreed(), req.GetEmail(), req.GetDnsProviderID(), req.GetStaging(), os.Stdout)
 		if err != nil {
-			return nil, xerrors.Errorf("repository.NewLetsEncryptGoogleCloudRepository: %w", err)
+			return nil, errors.Errorf("repository.NewLetsEncryptGoogleCloudRepository: %w", err)
 		}
 	default:
-		return nil, xerrors.Errorf("provider=\"%s\": %w", req.GetVaultProvider(), err)
+		return nil, errors.Errorf("provider=\"%s\": %w", req.GetVaultProvider(), err)
 	}
 
 	certUseCase := usecase.NewCertificatesUseCase(vaultRepo, letsencryptRepo)
 
 	privateKeyVaultVersionResource, certificateVaultVersionResource, err := certUseCase.IssueCertificate(ctx, privateKey, renewPrivateKey, req.GetPrivateKeyVaultResource(), req.GetCertificateVaultResource(), req.GetThresholdOfDaysToExpire(), req.GetDomains())
 	if err != nil {
-		return nil, xerrors.Errorf("(usecase.CertificatesUseCase).IssueCertificate: %w", err)
+		return nil, errors.Errorf("(usecase.CertificatesUseCase).IssueCertificate: %w", err)
 	}
 
 	resp = &cloudacme.IssueCertificateResponse{

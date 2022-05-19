@@ -8,7 +8,7 @@ import (
 
 const (
 	// APP_ENV environment variable name string.
-	APP_ENV = "APP_ENV" // nolint: revive
+	APP_ENV = "APP_ENV" // nolint: revive,stylecheck
 	// ROLE environment variable name string.
 	ROLE = "ROLE"
 	// ADDR environment variable name string.
@@ -16,13 +16,13 @@ const (
 	// PORT environment variable name string.
 	PORT = "PORT"
 	// GRPC_ENDPOINT environment variable name string.
-	GRPC_ENDPOINT = "GRPC_ENDPOINT" // nolint: revive
+	GRPC_ENDPOINT = "GRPC_ENDPOINT" // nolint: revive,stylecheck
 	// SPAN_EXPORTER environment variable name string.
-	SPAN_EXPORTER = "SPAN_EXPORTER" // nolint: revive
+	SPAN_EXPORTER = "SPAN_EXPORTER" // nolint: revive,stylecheck
 	// SHUTDOWN_TIMEOUT environment variable name string.
-	SHUTDOWN_TIMEOUT = "SHUTDOWN_TIMEOUT" // nolint: revive
+	SHUTDOWN_TIMEOUT = "SHUTDOWN_TIMEOUT" // nolint: revive,stylecheck
 	// GOOGLE_CLOUD_PROJECT environment variable name string.
-	GOOGLE_CLOUD_PROJECT = "GOOGLE_CLOUD_PROJECT" // nolint: revive
+	GOOGLE_CLOUD_PROJECT = "GOOGLE_CLOUD_PROJECT" // nolint: revive,stylecheck
 )
 
 const (
