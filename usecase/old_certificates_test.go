@@ -35,7 +35,7 @@ func TestNewCertificatesUseCase(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			_ = NewCertificatesUseCase(tt.args.certificatesRepo, tt.args.letsencryptRepo)
+			_ = NewOLDCertificatesUseCase(tt.args.certificatesRepo, tt.args.letsencryptRepo)
 		})
 	}
 }
@@ -66,7 +66,7 @@ func Test_certificatesUseCase_IssueCertificate(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			s := &certificatesUseCase{
+			s := &oldCertificatesUseCase{
 				vaultRepo:       tt.vaultRepo,
 				letsencryptRepo: tt.letsencryptRepo,
 			}
@@ -155,7 +155,7 @@ func Test_certificatesUseCase_issueCertificate(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			s := &certificatesUseCase{
+			s := &oldCertificatesUseCase{
 				vaultRepo:       tt.vaultRepo,
 				letsencryptRepo: tt.letsencryptRepo,
 			}

@@ -22,7 +22,7 @@ func TestCertificatesController_Issue(t *testing.T) {
 	t.Run("failure()", func(t *testing.T) {
 		t.Parallel()
 		c := &CertificatesController{}
-		_, err := c.Issue(context.Background(), &cloudacme.IssueCertificateRequest{})
+		_, err := c.OldIssue(context.Background(), &cloudacme.IssueCertificateRequest{})
 		if err == nil {
 			t.Errorf("*CertificatesController.Issue() error = %v, want not-nil", err)
 			return
@@ -189,7 +189,7 @@ func TestCertificatesController_issue(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			c := &CertificatesController{}
-			gotResp, err := c.issue(tt.args.ctx, tt.args.req, tt.args.newVaultGoogleSecretManagerRepository, tt.args.newLetsEncryptGoogleCloudRepository)
+			gotResp, err := c.oldIssue(tt.args.ctx, tt.args.req, tt.args.newVaultGoogleSecretManagerRepository, tt.args.newLetsEncryptGoogleCloudRepository)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("CertificatesController.issue() error = %v, wantErr %v", err, tt.wantErr)
 				return
