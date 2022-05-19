@@ -107,7 +107,11 @@ build-push-gcloud-run-deploy: GOOGLE_CLOUD_PROJECT build push gcloud-run-deploy 
 
 .PHONY: terraform-apply
 terraform-apply: GOOGLE_CLOUD_PROJECT ## terraform apply
-	GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT} TF_VAR_container_image=${IMAGE_REMOTE} terraform -chdir=terraform/gcloud apply
+	if [[ ${TERRAFORM_AUTO_APPROVE} = true ]]; then \
+		GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT} TF_VAR_container_image=${IMAGE_REMOTE} terraform -chdir=terraform/gcloud apply -auto-approve ; \
+	else \
+		GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT} TF_VAR_container_image=${IMAGE_REMOTE} terraform -chdir=terraform/gcloud apply ; \
+	fi
 
 .PHONY: build-push-terraform-apply
 build-push-terraform-apply: GOOGLE_CLOUD_PROJECT build push terraform-apply ## docker build push terraform apply
