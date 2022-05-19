@@ -6,6 +6,8 @@ REVISION := $(shell git log -1 --format='%H')
 BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 TIMESTAMP := $(shell git log -1 --format='%cI')
 
+GOLANGCI_VERSION := 1.46.2
+
 IMAGE_TAG := $(shell git describe --always --long --tags --dirty=-dirty$$(echo $$(git diff --cached; git diff) | sha1sum | head -c 7))
 IMAGE_LOCAL := cloudacme:${IMAGE_TAG}
 IMAGE_REMOTE := asia-docker.pkg.dev/${GOOGLE_CLOUD_PROJECT}/newtstat/cloudacme:${IMAGE_TAG}
@@ -46,7 +48,7 @@ tidy:
 lint:  ## lint
 	# lint
 	# cf. https://github.com/golangci/golangci-lint/releases
-	if [[ ! -x ./.local/bin/golangci-lint ]]; then GOBIN=${GITROOT}/.local/bin go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.45.2; fi
+	if [[ ! -x ./.local/bin/golangci-lint ]]; then GOBIN=${GITROOT}/.local/bin go install github.com/golangci/golangci-lint/cmd/golangci-lint@v${GOLANGCI_VERSION}; fi
 	# cf. https://golangci-lint.run/usage/linters/
 	./.local/bin/golangci-lint run --fix --sort-results
 	git diff --exit-code
