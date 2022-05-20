@@ -3,8 +3,8 @@ package controller
 import (
 	"context"
 
-	"github.com/newtstat/cloudacme/proto/generated/go/v1/cloudacme"
-	"github.com/newtstat/cloudacme/trace"
+	"github.com/ginokent/cloudacme/proto/generated/go/v1/cloudacme"
+	"github.com/ginokent/cloudacme/trace"
 )
 
 type TestAPIController struct {

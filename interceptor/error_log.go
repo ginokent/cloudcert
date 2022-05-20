@@ -3,7 +3,7 @@ package interceptor
 import (
 	"context"
 
-	"github.com/newtstat/cloudacme/contexts"
+	"github.com/ginokent/cloudacme/contexts"
 	"github.com/rec-logger/rec.go"
 	"google.golang.org/grpc"
 )

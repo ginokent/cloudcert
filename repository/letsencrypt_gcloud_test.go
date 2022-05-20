@@ -8,13 +8,13 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/ginokent/cloudacme/test/fixture"
 	"github.com/go-acme/lego/v4/certificate"
 	"github.com/go-acme/lego/v4/challenge"
 	"github.com/go-acme/lego/v4/challenge/dns01"
 	"github.com/go-acme/lego/v4/providers/dns/gcloud"
 	"github.com/go-acme/lego/v4/registration"
-	"github.com/newtstat/cloudacme/test/fixture"
-	"github.com/newtstat/nits.go"
+	"github.com/nitpickers/nits.go"
 )
 
 var (

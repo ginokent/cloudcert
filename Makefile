@@ -10,7 +10,7 @@ GOLANGCI_VERSION := 1.46.2
 
 IMAGE_TAG := $(shell git describe --always --long --tags --dirty=-dirty$$(echo $$(git diff --cached; git diff) | sha1sum | head -c 7))
 IMAGE_LOCAL := cloudacme:${IMAGE_TAG}
-IMAGE_REMOTE := asia-docker.pkg.dev/${GOOGLE_CLOUD_PROJECT}/newtstat/cloudacme:${IMAGE_TAG}
+IMAGE_REMOTE := asia-docker.pkg.dev/${GOOGLE_CLOUD_PROJECT}/ginokent/cloudacme:${IMAGE_TAG}
 
 .DEFAULT_GOAL := help
 .PHONY: help
@@ -64,7 +64,7 @@ ci: githooks tidy lint test ## ci
 
 .PHONY: gobuild
 gobuild: ## build
-	go build -ldflags "-X github.com/newtstat/cloudacme/config.version=${VERSION} -X github.com/newtstat/cloudacme/config.revision=${REVISION} -X github.com/newtstat/cloudacme/config.branch=${BRANCH} -X github.com/newtstat/cloudacme/config.timestamp=${TIMESTAMP}" ./cmd/cloudacme/...
+	go build -ldflags "-X github.com/ginokent/cloudacme/config.version=${VERSION} -X github.com/ginokent/cloudacme/config.revision=${REVISION} -X github.com/ginokent/cloudacme/config.branch=${BRANCH} -X github.com/ginokent/cloudacme/config.timestamp=${TIMESTAMP}" ./cmd/cloudacme/...
 
 .PHONY: run
 run: gobuild ## run

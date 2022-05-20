@@ -9,7 +9,7 @@ import (
 
 	gcloudtrace "github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace"
 	"github.com/cockroachdb/errors"
-	"github.com/newtstat/cloudacme/config"
+	"github.com/ginokent/cloudacme/config"
 	"github.com/rec-logger/rec.go"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"

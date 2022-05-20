@@ -6,10 +6,10 @@ import (
 	"os"
 
 	"github.com/cockroachdb/errors"
-	"github.com/newtstat/cloudacme/proto/generated/go/v1/cloudacme"
-	"github.com/newtstat/cloudacme/repository"
-	"github.com/newtstat/cloudacme/trace"
-	"github.com/newtstat/cloudacme/usecase"
+	"github.com/ginokent/cloudacme/proto/generated/go/v1/cloudacme"
+	"github.com/ginokent/cloudacme/repository"
+	"github.com/ginokent/cloudacme/trace"
+	"github.com/ginokent/cloudacme/usecase"
 )
 
 type CertificatesController struct {

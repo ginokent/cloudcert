@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package cloudacme.v1;
-option go_package = "github.com/newtstat/cloudacme/proto/generated/go/v1/cloudacme";
+option go_package = "github.com/ginokent/cloudacme/proto/generated/go/v1/cloudacme";
 
 import "google/api/annotations.proto";
 import "validate/validate.proto";

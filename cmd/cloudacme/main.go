@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/cockroachdb/errors"
-	"github.com/newtstat/cloudacme/config"
-	"github.com/newtstat/cloudacme/entrypoint"
-	"github.com/newtstat/cloudacme/trace"
+	"github.com/ginokent/cloudacme/config"
+	"github.com/ginokent/cloudacme/entrypoint"
+	"github.com/ginokent/cloudacme/trace"
 	"github.com/rec-logger/rec.go" // NOTE: github.com/open-telemetry/opentelemetry-go-contrib/tree/main/instrumentation/google.golang.org/grpc/otelgrpc
 )
 

@@ -8,9 +8,9 @@ import (
 
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"github.com/cockroachdb/errors"
+	"github.com/ginokent/cloudacme/config"
+	"github.com/ginokent/cloudacme/trace"
 	"github.com/googleapis/gax-go"
-	"github.com/newtstat/cloudacme/config"
-	"github.com/newtstat/cloudacme/trace"
 	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/api/option"
 	secretmanagerpb "google.golang.org/genproto/googleapis/cloud/secretmanager/v1"

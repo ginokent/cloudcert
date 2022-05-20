@@ -3,7 +3,7 @@ package mock
 import (
 	"context"
 
-	"github.com/newtstat/cloudacme/repository"
+	"github.com/ginokent/cloudacme/repository"
 )
 
 var _ repository.VaultRepository = (*VaultRepository)(nil)

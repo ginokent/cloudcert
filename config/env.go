@@ -3,7 +3,7 @@ package config
 import (
 	"time"
 
-	"github.com/newtstat/nits.go"
+	"github.com/nitpickers/nits.go"
 )
 
 const (

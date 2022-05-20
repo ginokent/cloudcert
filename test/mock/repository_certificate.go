@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto"
 
-	"github.com/newtstat/cloudacme/repository"
+	"github.com/ginokent/cloudacme/repository"
 )
 
 var _ repository.LetsEncryptRepository = (*LetsEncryptRepository)(nil)

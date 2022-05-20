@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
+	"github.com/ginokent/cloudacme/config"
+	"github.com/ginokent/cloudacme/test/fixture"
 	"github.com/googleapis/gax-go"
-	"github.com/newtstat/cloudacme/config"
-	"github.com/newtstat/cloudacme/test/fixture"
 	"google.golang.org/api/option"
 	secretmanagerpb "google.golang.org/genproto/googleapis/cloud/secretmanager/v1"
 	"google.golang.org/grpc/codes"

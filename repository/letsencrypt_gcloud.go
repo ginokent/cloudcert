@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/cockroachdb/errors"
+	"github.com/ginokent/cloudacme/trace"
 	legocert "github.com/go-acme/lego/v4/certificate"
 	"github.com/go-acme/lego/v4/challenge"
 	"github.com/go-acme/lego/v4/challenge/dns01"
@@ -15,7 +16,6 @@ import (
 	"github.com/go-acme/lego/v4/log"
 	"github.com/go-acme/lego/v4/providers/dns/gcloud"
 	"github.com/go-acme/lego/v4/registration"
-	"github.com/newtstat/cloudacme/trace"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/dns/v1"
 )

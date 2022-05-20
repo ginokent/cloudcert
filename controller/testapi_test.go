@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/newtstat/cloudacme/controller"
-	"github.com/newtstat/cloudacme/proto/generated/go/v1/cloudacme"
+	"github.com/ginokent/cloudacme/controller"
+	"github.com/ginokent/cloudacme/proto/generated/go/v1/cloudacme"
 )
 
 func TestTestAPIController_Echo(t *testing.T) {

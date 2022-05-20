@@ -6,11 +6,11 @@ import (
 	"crypto/tls"
 
 	"github.com/cockroachdb/errors"
+	"github.com/ginokent/cloudacme/contexts"
+	"github.com/ginokent/cloudacme/repository"
+	"github.com/ginokent/cloudacme/trace"
 	"github.com/go-acme/lego/v4/certcrypto"
-	"github.com/newtstat/cloudacme/contexts"
-	"github.com/newtstat/cloudacme/repository"
-	"github.com/newtstat/cloudacme/trace"
-	"github.com/newtstat/nits.go"
+	"github.com/nitpickers/nits.go"
 )
 
 type CertificatesUseCase interface {
