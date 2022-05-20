@@ -44,6 +44,43 @@ func NewCertificatesUseCase(certificatesRepo repository.VaultRepository, letsenc
 	})
 }
 
+func (uc *certificatesUseCase) Lock(ctx context.Context, privateKeyVaultResource string, certificateVaultResource string) (unlock func(), err error) {
+	l := contexts.GetLogger(ctx)
+
+	resources := []string{privateKeyVaultResource, certificateVaultResource}
+	var deferFuncs []func()
+	deferFunc := func() {
+		for _, f := range deferFuncs {
+			f()
+		}
+	}
+	defer func() {
+		if err != nil {
+			deferFunc()
+		}
+	}()
+
+	for _, resource := range resources {
+		resource := resource
+
+		if err := uc.vaultRepo.CreateVaultIfNotExists(ctx, resource); err != nil {
+			return func() {}, errors.Errorf("(*usecase.certificatesUseCase).vaultRepo.CreateVaultIfNotExists: %s: %w", resource, err)
+		}
+
+		if err := uc.vaultRepo.LockVault(ctx, resource); err != nil {
+			return func() {}, errors.Errorf("(*usecase.certificatesUseCase).vaultRepo.LockVault: %s: %w", resource, err)
+		}
+
+		deferFuncs = append(deferFuncs, func() {
+			if err := uc.vaultRepo.UnlockVault(ctx, resource); err != nil {
+				l.E().Error(errors.Errorf("(*usecase.certificatesUseCase).vaultRepo.UnlockVault: %s: %w", resource, err))
+			}
+		})
+	}
+
+	return deferFunc, nil
+}
+
 func (uc *certificatesUseCase) IssueCertificate(
 	ctx context.Context,
 	acmeAccountKeyVaultResource string,
@@ -100,18 +137,8 @@ func (uc *certificatesUseCase) _issueCertificate(
 		return "", "", errors.Errorf("(*usecase.certificatesUseCase).getAcmeAccountKey: %w", err)
 	}
 
-	privateKeyErr := uc.vaultRepo.LockVault(ctx, privateKeyVaultResource)
-	certificateErr := uc.vaultRepo.LockVault(ctx, certificateVaultResource)
-	if privateKeyErr != nil || certificateErr != nil {
-		return "", "", errors.Errorf("(*usecase.certificatesUseCase).vaultRepo.LockVault: privateKeyErr=%v, certificateErr=%v", privateKeyErr, certificateErr)
-	}
-	defer func() {
-		privateKeyErr := uc.vaultRepo.UnlockVault(ctx, privateKeyVaultResource)
-		certificateErr := uc.vaultRepo.UnlockVault(ctx, certificateVaultResource)
-		if privateKeyErr != nil || certificateErr != nil {
-			l.E().Error(errors.Errorf("(*usecase.certificatesUseCase).vaultRepo.UnlockVault: privateKeyErr=%v, certificateErr=%v", privateKeyErr, certificateErr))
-		}
-	}()
+	unlock, err := uc.Lock(ctx, privateKeyVaultResource, certificateVaultResource)
+	defer unlock()
 
 	privateKeyExists, privateKeyVaultVersionResource, privateKeyPEM, privateKeyErr := uc.vaultRepo.GetVaultVersionDataIfExists(ctx, privateKeyVaultResource+"/versions/latest")
 	certificateExists, certificateVaultVersionResource, certificatePEM, certificateErr := uc.vaultRepo.GetVaultVersionDataIfExists(ctx, certificateVaultResource+"/versions/latest")
@@ -211,6 +238,10 @@ func (uc *certificatesUseCase) getAcmeAccountKey(ctx context.Context, acmeAccoun
 
 	l := contexts.GetLogger(ctx)
 
+	if err := uc.vaultRepo.CreateVaultIfNotExists(ctx, acmeAccountKeyVaultResource); err != nil {
+		return nil, errors.Errorf("(*usecase.certificatesUseCase).vaultRepo.CreateVaultIfNotExists: %w", err)
+	}
+
 	if err := uc.vaultRepo.LockVault(ctx, acmeAccountKeyVaultResource); err != nil {
 		return nil, errors.Errorf("(*usecase.certificatesUseCase).vaultRepo.LockVault: %w", err)
 	}
@@ -240,10 +271,6 @@ func (uc *certificatesUseCase) getAcmeAccountKey(ctx context.Context, acmeAccoun
 		}); err != nil {
 			return nil, errors.Errorf("nits.Crypto.GenerateKey: %w", err)
 		}
-	}
-
-	if err := uc.vaultRepo.CreateVaultIfNotExists(ctx, acmeAccountKeyVaultResource); err != nil {
-		return nil, errors.Errorf("(*usecase.certificatesUseCase).vaultRepo.CreateVaultIfNotExists: %w", err)
 	}
 
 	if _, err = uc.vaultRepo.AddVaultVersion(ctx, acmeAccountKeyVaultResource, certcrypto.PEMEncode(acmeAccountKey)); err != nil {
