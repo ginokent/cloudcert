@@ -68,6 +68,17 @@ func (m *IssueCertificateRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if utf8.RuneCountInString(m.GetAcmeAccountKeyVaultResource()) < 1 {
+		err := IssueCertificateRequestValidationError{
+			field:  "AcmeAccountKeyVaultResource",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if utf8.RuneCountInString(m.GetPrivateKeyVaultResource()) < 1 {
 		err := IssueCertificateRequestValidationError{
 			field:  "PrivateKeyVaultResource",

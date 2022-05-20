@@ -30,10 +30,10 @@ const (
 	defaultRole               = ""
 	defaultAddr               = "0.0.0.0"
 	defaultPort               = 8080
+	defaultGRPCEndpoint       = "0.0.0.0:9090"
 	defaultSpanExporter       = "local"
 	defaultShutdownTimeout    = 10 * time.Second
 	defaultGoogleCloudProject = ""
-	defaultGRPCEndpoint       = "0.0.0.0:9090"
 )
 
 func loadEnv(c *config) *config {

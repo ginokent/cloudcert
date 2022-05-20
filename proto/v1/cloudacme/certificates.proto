@@ -13,21 +13,22 @@ message IssueCertificateRequest {
   }
 
   string vaultProvider = 1 [(validate.rules).string = { in: [ "gcloud" ] }];
-  string privateKeyVaultResource = 2 [(validate.rules).string.min_len = 1];
-  string certificateVaultResource = 3 [(validate.rules).string.min_len = 1];
+  string acmeAccountKeyVaultResource = 2 [(validate.rules).string.min_len = 1];
+  string privateKeyVaultResource = 3 [(validate.rules).string.min_len = 1];
+  string certificateVaultResource = 4 [(validate.rules).string.min_len = 1];
 
-  bool renewPrivateKey = 4;
-  string keyAlgorithm = 5 [(validate.rules).string = {
+  bool renewPrivateKey = 5;
+  string keyAlgorithm = 6 [(validate.rules).string = {
     in: [ "", "rsa2048", "rsa4096", "rsa8192", "ecdsa256", "ecdsa384" ]
   }];
 
-  string dnsProvider = 6 [(validate.rules).string = { in: [ "gcloud" ] }];
-  string dnsProviderID = 7 [(validate.rules).string.min_len = 1];
-  bool termsOfServiceAgreed = 8;
-  string email = 9 [(validate.rules).string.email = true];
-  int64 thresholdOfDaysToExpire = 10;
-  repeated string domains = 11 [(validate.rules).repeated .min_items = 1];
-  bool staging = 12;
+  string dnsProvider = 7 [(validate.rules).string = { in: [ "gcloud" ] }];
+  string dnsProviderID = 8 [(validate.rules).string.min_len = 1];
+  bool termsOfServiceAgreed = 9;
+  string email = 10 [(validate.rules).string.email = true];
+  int64 thresholdOfDaysToExpire = 11;
+  repeated string domains = 12 [(validate.rules).repeated .min_items = 1];
+  bool staging = 13;
 }
 
 message IssueCertificateResponse {

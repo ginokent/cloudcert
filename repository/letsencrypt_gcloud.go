@@ -104,10 +104,10 @@ func newLetsEncryptGoogleCloudRepository(
 	}, nil
 }
 
-func (repo *letsEncryptGoogleCloudDNSRepository) newClient(ctx context.Context, privateKey crypto.PrivateKey) (user *User, legoClient *lego.Client, err error) {
+func (repo *letsEncryptGoogleCloudDNSRepository) newClient(ctx context.Context, acmeAccountKey crypto.PrivateKey) (user *User, legoClient *lego.Client, err error) {
 	user = &User{
 		email: repo.email,
-		key:   privateKey,
+		key:   acmeAccountKey,
 	}
 
 	legoConfig := lego.NewConfig(user)
@@ -127,8 +127,8 @@ func (repo *letsEncryptGoogleCloudDNSRepository) newClient(ctx context.Context, 
 }
 
 // IssueCertificate issues a Let's Encrypt certificate.
-func (repo *letsEncryptGoogleCloudDNSRepository) IssueCertificate(ctx context.Context, privatekey crypto.PrivateKey, domains []string) (privateKeyPEM, certificatePEM, issuerCertificate, csr []byte, err error) {
-	user, legoClient, err := repo.newClient(ctx, privatekey)
+func (repo *letsEncryptGoogleCloudDNSRepository) IssueCertificate(ctx context.Context, acmeAccountKey crypto.PrivateKey, privateKey crypto.PrivateKey, domains []string) (privateKeyPEM, certificatePEM, issuerCertificate, csr []byte, err error) {
+	user, legoClient, err := repo.newClient(ctx, acmeAccountKey)
 	if err != nil {
 		return nil, nil, nil, nil, errors.Errorf("lego.NewClient: %w", err)
 	}
@@ -140,6 +140,7 @@ func (repo *letsEncryptGoogleCloudDNSRepository) IssueCertificate(ctx context.Co
 		legoClient.Registration,
 		repo.termsOfServiceAgreed,
 		legoClient.Certificate,
+		privateKey,
 		domains,
 	)
 }
@@ -163,8 +164,9 @@ func (repo *letsEncryptGoogleCloudDNSRepository) issueCertificate(
 	reg registerer,
 	termsOfServiceAgreed bool,
 	cert certificateObtainer,
+	privateKey crypto.PrivateKey,
 	domains []string,
-) (privateKey, certificate, issuerCertificate, csr []byte, err error) {
+) (privateKeyPEM, certificatePEM, issuerCertificatePEM, csr []byte, err error) {
 	ctx, span := trace.Start(ctx, "(*repository.vaultGoogleSecretManagerRepository).IssueCertificate")
 	defer span.End()
 
@@ -190,8 +192,9 @@ func (repo *letsEncryptGoogleCloudDNSRepository) issueCertificate(
 	user.registration = registrationResource
 
 	request := legocert.ObtainRequest{
-		Domains: domains,
-		Bundle:  true,
+		Domains:    domains,
+		PrivateKey: privateKey,
+		Bundle:     true,
 	}
 
 	var certificateResource *legocert.Resource

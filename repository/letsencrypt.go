@@ -9,7 +9,7 @@ import (
 )
 
 type LetsEncryptRepository interface {
-	IssueCertificate(ctx context.Context, privateKey crypto.PrivateKey, domains []string) (privateKeyPEM, certificatePEM, issuerCertificate, csr []byte, err error)
+	IssueCertificate(ctx context.Context, acmeAccountKey crypto.PrivateKey, privateKey crypto.PrivateKey, domains []string) (privateKeyPEM, certificatePEM, issuerCertificate, csr []byte, err error)
 }
 
 var (

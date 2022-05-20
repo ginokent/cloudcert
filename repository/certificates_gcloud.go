@@ -161,6 +161,10 @@ func (repo *vaultGoogleSecretManagerRepository) LockVault(ctx context.Context, t
 		labelValue = "true"
 	)
 
+	if err := repo.CreateVaultIfNotExists(ctx, targetVaultResource); err != nil {
+		return errors.Errorf("(*repository.vaultGoogleSecretManagerRepository).CreateVaultIfNotExists: %w", err)
+	}
+
 	var secret *secretmanagerpb.Secret
 	if err := trace.StartFunc(ctx, "(*repository.vaultGoogleSecretManagerRepository).client.GetSecret")(func(child context.Context) (err error) {
 		secret, err = repo.client.GetSecret(child, &secretmanagerpb.GetSecretRequest{
@@ -209,6 +213,10 @@ func (repo *vaultGoogleSecretManagerRepository) UnlockVault(ctx context.Context,
 		labelKey   = config.AppName + "-lock"
 		labelValue = "false"
 	)
+
+	if err := repo.CreateVaultIfNotExists(ctx, targetVaultResource); err != nil {
+		return errors.Errorf("(*repository.vaultGoogleSecretManagerRepository).CreateVaultIfNotExists: %w", err)
+	}
 
 	var secret *secretmanagerpb.Secret
 	if err := trace.StartFunc(ctx, "(*repository.vaultGoogleSecretManagerRepository).client.GetSecret")(func(child context.Context) (err error) {

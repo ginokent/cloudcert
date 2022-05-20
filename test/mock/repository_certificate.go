@@ -17,6 +17,6 @@ type LetsEncryptRepository struct {
 	IssueCertificateErr               error
 }
 
-func (m *LetsEncryptRepository) IssueCertificate(ctx context.Context, privateKey crypto.PrivateKey, domains []string) (privateKeyPEM, certificatePEM, issuerCertificate, csr []byte, err error) {
+func (m *LetsEncryptRepository) IssueCertificate(ctx context.Context, acmeAccountKey crypto.PrivateKey, privateKey crypto.PrivateKey, domains []string) (privateKeyPEM, certificatePEM, issuerCertificate, csr []byte, err error) {
 	return m.IssueCertificatePrivateKey, m.IssueCertificateCertificate, m.IssueCertificateIssuerCertificate, m.IssueCertificateCSR, m.IssueCertificateErr
 }

@@ -125,16 +125,17 @@ func Test_letsEncryptGoogleCloudDNSRepository_IssueCertificate(t *testing.T) {
 	t.Parallel()
 
 	type args struct {
-		privateKey crypto.PrivateKey
-		domains    []string
+		acmeAccountKey crypto.PrivateKey
+		privateKey     crypto.PrivateKey
+		domains        []string
 	}
 	tests := []struct {
 		name    string
 		args    args
 		wantErr bool
 	}{
-		{"failure(privateKey-is-nil)", args{nil, nil}, true},
-		{"failure(domains-is-nil)", args{nits.Crypto.MustGenerateKey(nits.Crypto.GenerateKey("rsa512")), nil}, true},
+		{"failure(privateKey-is-nil)", args{nil, nil, nil}, true},
+		{"failure(domains-is-nil)", args{nits.Crypto.MustGenerateKey(nits.Crypto.GenerateKey("rsa512")), nits.Crypto.MustGenerateKey(nits.Crypto.GenerateKey("rsa512")), nil}, true},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -148,7 +149,7 @@ func Test_letsEncryptGoogleCloudDNSRepository_IssueCertificate(t *testing.T) {
 				t.Errorf("newLetsEncryptGoogleCloudRepository: %v", repoErr)
 			}
 
-			_, _, _, _, err := repo.IssueCertificate(context.TODO(), tt.args.privateKey, tt.args.domains)
+			_, _, _, _, err := repo.IssueCertificate(context.TODO(), tt.args.acmeAccountKey, tt.args.privateKey, tt.args.domains)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("letsEncryptGoogleCloudDNSRepository.IssueCertificate() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -166,6 +167,7 @@ func Test_letsEncryptGoogleCloudDNSRepository_issueCertificate(t *testing.T) {
 		reg                  registerer
 		termsOfServiceAgreed bool
 		cert                 certificateObtainer
+		privateKey           crypto.PrivateKey
 		domains              []string
 	}
 	tests := []struct {
@@ -173,10 +175,10 @@ func Test_letsEncryptGoogleCloudDNSRepository_issueCertificate(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{"success()", args{&User{}, &mockChallenger{} /****************************************/, &mockRegisterer{} /********************************/, true, &mockObtainer{ObtainReturn: &certificate.Resource{}} /**/, []string{"localhost"}}, false},
-		{"failure()", args{&User{}, &mockChallenger{SetDNS01ProviderError: fixture.ErrTestError}, &mockRegisterer{} /********************************/, true, &mockObtainer{} /***************************************/, []string{"localhost"}}, true},
-		{"failure()", args{&User{}, &mockChallenger{} /****************************************/, &mockRegisterer{RegisterError: fixture.ErrTestError}, true, &mockObtainer{} /***************************************/, []string{"localhost"}}, true},
-		{"failure()", args{&User{}, &mockChallenger{} /****************************************/, &mockRegisterer{} /********************************/, true, &mockObtainer{ObtainError: fixture.ErrTestError} /******/, []string{"localhost"}}, true},
+		{"success()", args{&User{}, &mockChallenger{} /****************************************/, &mockRegisterer{} /********************************/, true, &mockObtainer{ObtainReturn: &certificate.Resource{}} /**/, nits.Crypto.MustGenerateKey(nits.Crypto.GenerateKey("rsa512")), []string{"localhost"}}, false},
+		{"failure()", args{&User{}, &mockChallenger{SetDNS01ProviderError: fixture.ErrTestError}, &mockRegisterer{} /********************************/, true, &mockObtainer{} /***************************************/, nits.Crypto.MustGenerateKey(nits.Crypto.GenerateKey("rsa512")), []string{"localhost"}}, true},
+		{"failure()", args{&User{}, &mockChallenger{} /****************************************/, &mockRegisterer{RegisterError: fixture.ErrTestError}, true, &mockObtainer{} /***************************************/, nits.Crypto.MustGenerateKey(nits.Crypto.GenerateKey("rsa512")), []string{"localhost"}}, true},
+		{"failure()", args{&User{}, &mockChallenger{} /****************************************/, &mockRegisterer{} /********************************/, true, &mockObtainer{ObtainError: fixture.ErrTestError} /******/, nits.Crypto.MustGenerateKey(nits.Crypto.GenerateKey("rsa512")), []string{"localhost"}}, true},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -190,7 +192,7 @@ func Test_letsEncryptGoogleCloudDNSRepository_issueCertificate(t *testing.T) {
 				t.Errorf("newLetsEncryptGoogleCloudRepository: %v", repoErr)
 			}
 
-			_, _, _, _, err := repo.issueCertificate(context.TODO(), tt.args.user, tt.args.challenge, tt.args.reg, tt.args.termsOfServiceAgreed, tt.args.cert, tt.args.domains)
+			_, _, _, _, err := repo.issueCertificate(context.TODO(), tt.args.user, tt.args.challenge, tt.args.reg, tt.args.termsOfServiceAgreed, tt.args.cert, tt.args.privateKey, tt.args.domains)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("letsEncryptGoogleCloudDNSRepository.issueCertificate() error = %v, wantErr %v", err, tt.wantErr)
 				return
