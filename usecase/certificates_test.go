@@ -1,0 +1,2 @@
+// nolint: testpackage
+package usecase

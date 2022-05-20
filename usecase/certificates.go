@@ -44,10 +44,9 @@ func NewCertificatesUseCase(certificatesRepo repository.VaultRepository, letsenc
 	})
 }
 
-func (uc *certificatesUseCase) Lock(ctx context.Context, privateKeyVaultResource string, certificateVaultResource string) (unlock func(), err error) {
+func (uc *certificatesUseCase) lock(ctx context.Context, resources ...string) (unlock func(), err error) {
 	l := contexts.GetLogger(ctx)
 
-	resources := []string{privateKeyVaultResource, certificateVaultResource}
 	var deferFuncs []func()
 	deferFunc := func() {
 		for _, f := range deferFuncs {
@@ -107,6 +106,7 @@ func (uc *certificatesUseCase) IssueCertificate(
 		keyAlgorithm,
 		thresholdOfDaysToExpire,
 		domains,
+		certcrypto.ParsePEMPrivateKey,
 		tls.X509KeyPair,
 		nits.X509.CheckCertificatePEM,
 		nits.Crypto.GenerateKey,
@@ -122,6 +122,7 @@ func (uc *certificatesUseCase) _issueCertificate(
 	keyAlgorithm string,
 	thresholdOfDaysToExpire int64,
 	domains []string,
+	_certcrypto_ParsePEMPrivateKey func(key []byte) (crypto.PrivateKey, error),
 	_tls_X509KeyPair func(certPEMBlock []byte, keyPEMBlock []byte) (tls.Certificate, error), // nolint: revive,stylecheck
 	_nits_X509_CheckCertificatePEM func(pemData []byte) (notyet bool, daysToStart int64, expired bool, daysToExpire int64, err error), // nolint: revive,stylecheck
 	_nits_Crypto_GenerateKey func(algorithm string) (crypto.PrivateKey, error), // nolint: revive,stylecheck
@@ -132,33 +133,42 @@ func (uc *certificatesUseCase) _issueCertificate(
 ) {
 	l := contexts.GetLogger(ctx)
 
-	acmeAccountKey, err := uc.getAcmeAccountKey(ctx, acmeAccountKeyVaultResource, _nits_Crypto_GenerateKey)
+	unlock, err := uc.lock(ctx, acmeAccountKeyVaultResource, privateKeyVaultResource, certificateVaultResource)
+	if err != nil {
+		return "", "", errors.Errorf("(*usecase.certificatesUseCase).lock: %w", err)
+	}
+	defer unlock()
+
+	acmeAccountKey, err := uc.getAcmeAccountKey(ctx, acmeAccountKeyVaultResource, certcrypto.ParsePEMPrivateKey, nits.Crypto.GenerateKey)
 	if err != nil {
 		return "", "", errors.Errorf("(*usecase.certificatesUseCase).getAcmeAccountKey: %w", err)
 	}
 
-	unlock, err := uc.Lock(ctx, privateKeyVaultResource, certificateVaultResource)
-	defer unlock()
-
 	privateKeyExists, privateKeyVaultVersionResource, privateKeyPEM, privateKeyErr := uc.vaultRepo.GetVaultVersionDataIfExists(ctx, privateKeyVaultResource+"/versions/latest")
 	certificateExists, certificateVaultVersionResource, certificatePEM, certificateErr := uc.vaultRepo.GetVaultVersionDataIfExists(ctx, certificateVaultResource+"/versions/latest")
 	if privateKeyErr != nil || certificateErr != nil {
-		return "", "", errors.Errorf("(*usecase.certificatesUseCase).vaultRepo.GetVaultVersionDataIfExists: privateKeyErr=%v, certificateErr=%w", privateKeyErr, certificateErr)
+		return "", "", errors.Errorf("(*usecase.certificatesUseCase).vaultRepo.GetVaultVersionDataIfExists: privateKeyErr=%v, certificateErr=%v", privateKeyErr, certificateErr)
 	}
 
 	var privateKey crypto.PrivateKey
 
+	// NOTE: If renewPrivateKey flag is false, and private key exists, and certificate exists, checking key pair and certificate.
 	if !renewPrivateKey && privateKeyExists && certificateExists {
 		var keyPairIsBroken bool
 
-		privateKey, err = certcrypto.ParsePEMPrivateKey(privateKeyPEM)
-		if err != nil {
+		if err := trace.StartFunc(ctx, "certcrypto.ParsePEMPrivateKey")(func(child context.Context) (err error) {
+			privateKey, err = _certcrypto_ParsePEMPrivateKey(privateKeyPEM)
+			return
+		}); err != nil {
 			l.E().Error(errors.Errorf("🚨 private key is broken: certcrypto.ParsePEMPrivateKey: %v", err))
 			renewPrivateKey = true
 			keyPairIsBroken = true
 		}
 
-		if _, err := _tls_X509KeyPair(certificatePEM, privateKeyPEM); !keyPairIsBroken && err != nil {
+		if err := trace.StartFunc(ctx, "tls.X509KeyPair")(func(child context.Context) (err error) {
+			_, err = _tls_X509KeyPair(certificatePEM, privateKeyPEM)
+			return
+		}); err != nil && !keyPairIsBroken {
 			l.E().Error(errors.Errorf("🚨 a pair of certificate and private key is broken. tls.X509KeyPair: %w", err))
 			keyPairIsBroken = true
 		}
@@ -175,15 +185,17 @@ func (uc *certificatesUseCase) _issueCertificate(
 			}); err != nil {
 				l.E().Error(errors.Errorf("🚨 certificate (%s) is broken. nits.X509.CheckCertificatePEM: %w", certificateVaultVersionResource, err))
 			} else if !notyet && !expired && daysToExpire > thresholdOfDaysToExpire {
+				// NOTE: If certificate is not expired, early return.
 				l.F().Infof("✅ there is still time (%d days) for current certificate to expire. It will not be renewed", daysToExpire)
-				return privateKeyVaultVersionResource, certificateVaultVersionResource, nil // early return
+				return privateKeyVaultVersionResource, certificateVaultVersionResource, nil
 			}
 
 			l.F().Infof("❗️ current certificate has expired or is due to expire in less than %d days. Renew the certificate", thresholdOfDaysToExpire)
 		}
 	}
 
-	if !privateKeyExists || renewPrivateKey {
+	// NOTE: If renewPrivateKey flag is true, or private key does not exist, generating private key.
+	if renewPrivateKey || !privateKeyExists {
 		if keyAlgorithm == "" {
 			keyAlgorithm = nits.CryptoRSA4096
 		}
@@ -232,24 +244,11 @@ func (uc *certificatesUseCase) _issueCertificate(
 	return privateKeyVaultVersionResource, certificateVaultVersionResource, nil
 }
 
-func (uc *certificatesUseCase) getAcmeAccountKey(ctx context.Context, acmeAccountKeyVaultResource string, _nits_Crypto_GenerateKey func(algorithm string) (crypto.PrivateKey, error)) (acmeAccountKey crypto.PrivateKey, err error) {
+func (uc *certificatesUseCase) getAcmeAccountKey(ctx context.Context, acmeAccountKeyVaultResource string, _certcrypto_ParsePEMPrivateKey func(key []byte) (crypto.PrivateKey, error), _nits_Crypto_GenerateKey func(algorithm string) (crypto.PrivateKey, error)) (acmeAccountKey crypto.PrivateKey, err error) {
 	ctx, span := trace.Start(ctx, "(*usecase.certificatesUseCase).getAcmeAccountKey")
 	defer span.End()
 
 	l := contexts.GetLogger(ctx)
-
-	if err := uc.vaultRepo.CreateVaultIfNotExists(ctx, acmeAccountKeyVaultResource); err != nil {
-		return nil, errors.Errorf("(*usecase.certificatesUseCase).vaultRepo.CreateVaultIfNotExists: %w", err)
-	}
-
-	if err := uc.vaultRepo.LockVault(ctx, acmeAccountKeyVaultResource); err != nil {
-		return nil, errors.Errorf("(*usecase.certificatesUseCase).vaultRepo.LockVault: %w", err)
-	}
-	defer func() {
-		if err := uc.vaultRepo.UnlockVault(ctx, acmeAccountKeyVaultResource); err != nil {
-			l.E().Error(errors.Errorf("(*usecase.certificatesUseCase).vaultRepo.UnlockVault: %w", err))
-		}
-	}()
 
 	acmeAccountKeyExists, _, acmeAccountKeyPEM, err := uc.vaultRepo.GetVaultVersionDataIfExists(ctx, acmeAccountKeyVaultResource+"/versions/latest")
 	if err != nil {
@@ -257,7 +256,7 @@ func (uc *certificatesUseCase) getAcmeAccountKey(ctx context.Context, acmeAccoun
 	}
 
 	if acmeAccountKeyExists {
-		acmeAccountKey, err = certcrypto.ParsePEMPrivateKey(acmeAccountKeyPEM)
+		acmeAccountKey, err = _certcrypto_ParsePEMPrivateKey(acmeAccountKeyPEM)
 		if err != nil {
 			l.E().Error(errors.Errorf("🚨 private key is broken: certcrypto.ParsePEMPrivateKey: %v", err))
 			acmeAccountKeyExists = false
