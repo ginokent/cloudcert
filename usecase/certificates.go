@@ -47,7 +47,7 @@ func NewCertificatesUseCase(certificatesRepo repository.VaultRepository, letsenc
 func (uc *certificatesUseCase) lock(ctx context.Context, resources ...string) (unlock func(), err error) {
 	l := contexts.GetLogger(ctx)
 
-	var deferFuncs []func()
+	deferFuncs := []func(){}
 	deferFunc := func() {
 		for _, f := range deferFuncs {
 			f()
@@ -113,6 +113,7 @@ func (uc *certificatesUseCase) IssueCertificate(
 	)
 }
 
+// nolint: cyclop,funlen,gocognit
 func (uc *certificatesUseCase) _issueCertificate(
 	ctx context.Context,
 	acmeAccountKeyVaultResource string,
@@ -122,7 +123,7 @@ func (uc *certificatesUseCase) _issueCertificate(
 	keyAlgorithm string,
 	thresholdOfDaysToExpire int64,
 	domains []string,
-	_certcrypto_ParsePEMPrivateKey func(key []byte) (crypto.PrivateKey, error),
+	_certcrypto_ParsePEMPrivateKey func(key []byte) (crypto.PrivateKey, error), // nolint: revive,stylecheck
 	_tls_X509KeyPair func(certPEMBlock []byte, keyPEMBlock []byte) (tls.Certificate, error), // nolint: revive,stylecheck
 	_nits_X509_CheckCertificatePEM func(pemData []byte) (notyet bool, daysToStart int64, expired bool, daysToExpire int64, err error), // nolint: revive,stylecheck
 	_nits_Crypto_GenerateKey func(algorithm string) (crypto.PrivateKey, error), // nolint: revive,stylecheck
@@ -153,7 +154,7 @@ func (uc *certificatesUseCase) _issueCertificate(
 	var privateKey crypto.PrivateKey
 
 	// NOTE: If renewPrivateKey flag is false, and private key exists, and certificate exists, checking key pair and certificate.
-	if !renewPrivateKey && privateKeyExists && certificateExists {
+	if !renewPrivateKey && privateKeyExists && certificateExists { // nolint: nestif
 		var keyPairIsBroken bool
 
 		if err := trace.StartFunc(ctx, "certcrypto.ParsePEMPrivateKey")(func(child context.Context) (err error) {
@@ -244,7 +245,12 @@ func (uc *certificatesUseCase) _issueCertificate(
 	return privateKeyVaultVersionResource, certificateVaultVersionResource, nil
 }
 
-func (uc *certificatesUseCase) getAcmeAccountKey(ctx context.Context, acmeAccountKeyVaultResource string, _certcrypto_ParsePEMPrivateKey func(key []byte) (crypto.PrivateKey, error), _nits_Crypto_GenerateKey func(algorithm string) (crypto.PrivateKey, error)) (acmeAccountKey crypto.PrivateKey, err error) {
+func (uc *certificatesUseCase) getAcmeAccountKey(
+	ctx context.Context,
+	acmeAccountKeyVaultResource string,
+	_certcrypto_ParsePEMPrivateKey func(key []byte) (crypto.PrivateKey, error), // nolint: revive,stylecheck
+	_nits_Crypto_GenerateKey func(algorithm string) (crypto.PrivateKey, error), // nolint: revive,stylecheck
+) (acmeAccountKey crypto.PrivateKey, err error) {
 	ctx, span := trace.Start(ctx, "(*usecase.certificatesUseCase).getAcmeAccountKey")
 	defer span.End()
 
