@@ -140,7 +140,7 @@ func (uc *certificatesUseCase) _issueCertificate(
 	}
 	defer unlock()
 
-	acmeAccountKey, err := uc.getAcmeAccountKey(ctx, acmeAccountKeyVaultResource, certcrypto.ParsePEMPrivateKey, nits.Crypto.GenerateKey)
+	acmeAccountKey, err := uc.getAcmeAccountKey(ctx, acmeAccountKeyVaultResource, _certcrypto_ParsePEMPrivateKey, _nits_Crypto_GenerateKey)
 	if err != nil {
 		return "", "", errors.Errorf("(*usecase.certificatesUseCase).getAcmeAccountKey: %w", err)
 	}
@@ -271,7 +271,7 @@ func (uc *certificatesUseCase) getAcmeAccountKey(
 
 	if !acmeAccountKeyExists {
 		if err := trace.StartFunc(ctx, "nits.Crypto.GenerateKey")(func(child context.Context) (err error) {
-			acmeAccountKey, err = _nits_Crypto_GenerateKey(nits.CryptoRSA4096)
+			acmeAccountKey, err = _nits_Crypto_GenerateKey(nits.CryptoECDSA384)
 			return
 		}); err != nil {
 			return nil, errors.Errorf("nits.Crypto.GenerateKey: %w", err)
