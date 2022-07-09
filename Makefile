@@ -10,7 +10,7 @@ GOLANGCI_VERSION := 1.46.2
 
 IMAGE_TAG := $(shell git describe --always --long --tags --dirty=-dirty$$(echo $$(git diff --cached; git diff) | sha1sum | head -c 7))
 IMAGE_LOCAL := cloudacme:${IMAGE_TAG}
-IMAGE_REMOTE := asia-docker.pkg.dev/${GOOGLE_CLOUD_PROJECT}/ginokent/cloudacme:${IMAGE_TAG}
+IMAGE_REMOTE := asia-docker.pkg.dev/${GOOGLE_CLOUD_PROJECT}/newtstat/cloudacme:${IMAGE_TAG}
 
 .DEFAULT_GOAL := help
 .PHONY: help
@@ -107,7 +107,7 @@ build-push-gcloud-run-deploy: GOOGLE_CLOUD_PROJECT build push gcloud-run-deploy 
 
 .PHONY: terraform-apply
 terraform-apply: GOOGLE_CLOUD_PROJECT ## terraform apply
-	if [[ ${TERRAFORM_AUTO_APPROVE} = true ]]; then \
+	if [[ "${TERRAFORM_AUTO_APPROVE}" = true ]]; then \
 		GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT} TF_VAR_container_image=${IMAGE_REMOTE} terraform -chdir=terraform/gcloud apply -auto-approve ; \
 	else \
 		GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT} TF_VAR_container_image=${IMAGE_REMOTE} terraform -chdir=terraform/gcloud apply ; \
