@@ -1,0 +1,14 @@
+# NOTE: buf は deps の「解決を楽にするため」「バージョンを明示するため」「バージョンアップを用意にするため」だけに使う
+version: v1
+name: buf.build/ginokent/cloudcert
+breaking:
+  use:
+    - FILE
+deps:
+  - buf.build/googleapis/googleapis
+  - buf.build/envoyproxy/protoc-gen-validate
+lint:
+  use:
+    - DEFAULT
+  except:
+    - PACKAGE_DIRECTORY_MATCH # NOTE: C# に source_relative オプションがなくディレクトリで v1 v2 を切ることができないため buf.yaml を各ディレクトリに配置している
