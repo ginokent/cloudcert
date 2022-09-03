@@ -1,0 +1,11 @@
+# terraform
+.terraform/
+
+# codecov
+coverage.txt
+coverage.html
+
+# unique
+/.local/
+/.overwrite.env
+/cloudacme

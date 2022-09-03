@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package cloudacme.v1;
+option go_package = "github.com/ginokent/cloudacme/generated/go/proto/v1;cloudacmev1";
+
+import "google/api/annotations.proto";
+import "validate/validate.proto";
+
+message TestAPIServiceEchoRequest {
+  string message = 1 [(validate.rules).string.min_len = 1];
+}
+
+message TestAPIServiceEchoResponse {
+  string message = 1;
+}
+
+message TestAPIServiceRaiseErrorRequest {
+  string message = 1;
+}
+
+message TestAPIServiceRaiseErrorResponse {
+  string message = 1;
+}
+
+service TestAPIService {
+  // Echo は受け取った message を返却します
+  rpc Echo(TestAPIServiceEchoRequest) returns (TestAPIServiceEchoResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/testapi/echo"
+      body: "*"
+    };
+  }
+
+  // RaiseError は意図的にエラーを発生させます
+  rpc RaiseError(TestAPIServiceRaiseErrorRequest)
+      returns (TestAPIServiceRaiseErrorResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/testapi/raise_error"
+    };
+  }
+}

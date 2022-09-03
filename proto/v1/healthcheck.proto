@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package cloudacme.v1;
+option go_package = "github.com/ginokent/cloudacme/generated/go/proto/v1;cloudacmev1";
+
+import "google/api/annotations.proto";
+
+message HealthServiceCheckRequest {
+  // Empty
+}
+
+message HealthServiceCheckResponse {
+  int32 status = 1;
+  string message = 2;
+}
+
+service HealthService {
+  rpc Check(HealthServiceCheckRequest)
+      returns (HealthServiceCheckResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/health/check"
+    };
+  }
+}
