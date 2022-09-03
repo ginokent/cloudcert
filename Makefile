@@ -1,22 +1,37 @@
-SHELL            := /bin/bash
+SHELL        := /bin/bash -Eeu -o pipefail
+GITROOT      := $(shell git rev-parse --show-toplevel || pwd || echo '.')
+MAKEFILE_DIR := $(subst /,,$(dir $(lastword ${MAKEFILE_LIST})))
+APP_NAME     := cloudcert
+GOMODULE     := github.com/ginokent/${APP_NAME}
+PRE_PUSH     := ${GITROOT}/.git/hooks/pre-push
+TIMESTAMP    := $(git log -1 --format='%cI')
+BRANCH       := $(git rev-parse --abbrev-ref HEAD)
+VERSION      := $(git describe --tags --abbrev=0 --always)
+REVISION     := $(git log -1 --format='%H')
+IMAGE_TAG    := ${REVISION}
+REPO_LOCAL   := ${GOMODULE}
+REPO_REMOTE  := asia-docker.pkg.dev/${GOOGLE_CLOUD_PROJECT}/${GOMODULE}
 
 .DEFAULT_GOAL := help
 .PHONY: help
 help: githooks ## display this help documents.
-	@grep -E '^[0-9a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-40s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[0-9a-zA-Z_-]+:.*?## .*$$' ${MAKEFILE_LIST} | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-40s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: githooks
-githooks:  ## githooks をインストールします。
+githooks:
 	@test -f "${PRE_PUSH}" || cp -ai "${GITROOT}/.githooks/pre-push" "${PRE_PUSH}"
 
-.PHONY: setup
-setup: githooks ## protoc 周りのツール郡などをセットアップします。
-	GOBIN=${GITROOT}/.local/bin go install \
+protocgens:
+	GOBIN="${GITROOT}/.local/bin" go install \
 		github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway \
 		github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2 \
 		google.golang.org/protobuf/cmd/protoc-gen-go \
 		google.golang.org/grpc/cmd/protoc-gen-go-grpc \
 		github.com/envoyproxy/protoc-gen-validate
+
+
+.PHONY: setup
+setup: githooks protocgens ## githooks protocgens 周りのツール郡などをセットアップします。
 
 .PHONY: buf-mod-update
 buf-mod-update: ## buf mod update を実行します。
@@ -33,9 +48,9 @@ lint:  ## go mod tidy の後に golangci-lint を実行します。
 	git diff --exit-code go.mod go.sum
 	# lint
 	# cf. https://github.com/golangci/golangci-lint/releases
-	# if [[ ! -x ./.local/bin/golangci-lint ]]; then GOBIN=${GITROOT}/.local/bin go install github.com/golangci/golangci-lint/cmd/golangci-lint@v${GOLANGCI_VERSION}; fi
+	# if [[ ! -x ${GITROOT}/.local/bin/golangci-lint ]]; then GOBIN="${GITROOT}/.local/bin" go install github.com/golangci/golangci-lint/cmd/golangci-lint@v${GOLANGCI_VERSION}; fi
 	# cf. https://golangci-lint.run/usage/linters/
-	./bin/golangci-lint run --fix --sort-results
+	${GITROOT}/bin/golangci-lint run --fix --sort-results
 	git diff --exit-code
 
 .PHONY: test
@@ -65,7 +80,7 @@ logs:  ## docker compose のログを出力します。
 
 .PHONY: gobuild
 gobuild: ## go build を実行します。
-	go build -ldflags "-X github.com/${OWNER_NAME}/${APP_NAME}/config.version=${VERSION} -X github.com/${OWNER_NAME}/${APP_NAME}/config.revision=${REVISION} -X github.com/${OWNER_NAME}/${APP_NAME}/config.branch=${BRANCH} -X github.com/${OWNER_NAME}/${APP_NAME}/config.timestamp=${TIMESTAMP}" ./cmd/${APP_NAME}/...
+	go build -ldflags "-X ${GOMODULE}/config.timestamp=${TIMESTAMP} -X ${GOMODULE}/config.branch=${BRANCH} -X ${GOMODULE}/config.version=${VERSION} -X ${GOMODULE}/config.revision=${REVISION}" ./cmd/${APP_NAME}/...
 
 .PHONY: run
 run: gobuild ## go build を実行し、コンパイル結果を起動します。
@@ -73,12 +88,12 @@ run: gobuild ## go build を実行し、コンパイル結果を起動します�
 
 .PHONY: air
 air:  ## air を起動します。
-	if [[ ! -x ./.local/bin/air ]]; then curl -sSfL https://raw.githubusercontent.com/cosmtrek/air/master/install.sh | sh -s -- -b ${GITROOT}/.local/bin; fi
+	if [[ ! -x ${GITROOT}/.local/bin/air ]]; then curl -sSfL https://raw.githubusercontent.com/cosmtrek/air/master/install.sh | sh -s -- -b ${GITROOT}/.local/bin; fi
 	ADDR=localhost GRPC_ENDPOINT=localhost:9090 air
 
 .PHONY: build
 build:  ## タグ ${IMAGE_LOCAL}:${IMAGE_TAG} に向けて docker build を実行します。
-	docker build -t ${IMAGE_LOCAL}:${IMAGE_TAG} --build-arg VERSION=${VERSION} --build-arg REVISION=${REVISION} --build-arg BRANCH=${BRANCH} --build-arg TIMESTAMP=${TIMESTAMP} .
+	docker build -t ${IMAGE_LOCAL}:${IMAGE_TAG} --build-arg TIMESTAMP=${TIMESTAMP} --build-arg BRANCH=${BRANCH} --build-arg VERSION=${VERSION} --build-arg REVISION=${REVISION} .
 
 .PHONY: GOOGLE_CLOUD_PROJECT
 GOOGLE_CLOUD_PROJECT:
