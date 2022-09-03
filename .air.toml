@@ -3,8 +3,8 @@ testdata_dir = "testdata"
 tmp_dir = "tmp"
 
 [build]
-  bin = "./cloudacme"
-  cmd = "go build -o ./cloudacme ./cmd/cloudacme/..."
+  bin = "./cloudcert"
+  cmd = "go build -o ./cloudcert ./cmd/cloudcert/..."
   delay = 1000
   exclude_dir = ["assets", "tmp", "vendor", "testdata"]
   exclude_file = []

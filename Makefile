@@ -35,11 +35,11 @@ setup: githooks protocgens ## githooks protocgens 周りのツール郡などを
 
 .PHONY: buf-mod-update
 buf-mod-update: ## buf mod update を実行します。
-	buf --debug --verbose mod update
+	${GITROOT}/bin/buf --debug --verbose mod update
 
 .PHONY: buf
 buf: ## buf generate を実行します。
-	buf --debug --verbose generate
+	${GITROOT}/bin/buf --debug --verbose generate
 
 .PHONY: lint
 lint:  ## go mod tidy の後に golangci-lint を実行します。

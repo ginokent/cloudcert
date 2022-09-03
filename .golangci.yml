@@ -28,7 +28,7 @@ linters-settings:
       - r *http.Request
   wrapcheck:
     ignoreSigs:
-      - func github.com/ginokent/cloudacme/pkg/errors.Errorf(format string, a ...interface{}) error
+      - func github.com/ginokent/cloudcert/pkg/errors.Errorf(format string, a ...interface{}) error
       - func (*github.com/rec-logger/rec.go.errorReturner).Err() error
       - func google.golang.org/grpc/status.Error(c google.golang.org/grpc/codes.Code, msg string) error
 

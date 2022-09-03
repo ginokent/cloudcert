@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package cloudcert.v1;
+option go_package = "github.com/ginokent/cloudcert/generated/go/proto/v1/cloudcert;cloudcertv1";
+
+import "google/api/annotations.proto";
+import "validate/validate.proto";
+
+message CertificatesServiceIssueRequest {
+  enum Provider {
+    PROVIDER_UNSPECIFIED = 0;
+    PROVIDER_GCLOUD = 1;
+  }
+
+  string vault_provider = 1 [(validate.rules).string = { in: [ "gcloud" ] }];
+  string acme_account_key_vault_resource = 2 [(validate.rules).string.min_len = 1];
+  string private_key_vault_resource = 3 [(validate.rules).string.min_len = 1];
+  string certificate_vault_resource = 4 [(validate.rules).string.min_len = 1];
+
+  bool renew_private_key = 5;
+  string key_algorithm = 6 [(validate.rules).string = {
+    in: [ "", "rsa2048", "rsa4096", "rsa8192", "ecdsa256", "ecdsa384" ]
+  }];
+
+  string dns_provider = 7 [(validate.rules).string = { in: [ "gcloud" ] }];
+  string dns_provider_id = 8 [(validate.rules).string.min_len = 1];
+  bool terms_of_service_agreed = 9;
+  string email = 10 [(validate.rules).string.email = true];
+  int64 threshold_of_days_to_expire = 11;
+  repeated string domains = 12 [(validate.rules).repeated .min_items = 1];
+  bool staging = 13;
+}
+
+message CertificatesServiceIssueResponse {
+  string private_key_vault_version_resource = 1;
+  string certificate_vault_version_resource = 2;
+}
+
+service CertificatesService {
+  rpc Issue(CertificatesServiceIssueRequest) returns (CertificatesServiceIssueResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/certificates/issue"
+      body: "*"
+    };
+  }
+}
