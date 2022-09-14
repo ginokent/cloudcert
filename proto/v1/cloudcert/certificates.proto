@@ -4,16 +4,23 @@ package cloudcert.v1;
 option go_package = "github.com/ginokent/cloudcert/generated/go/proto/v1/cloudcert;cloudcertv1";
 
 import "google/api/annotations.proto";
+import "google/protobuf/descriptor.proto";
 import "validate/validate.proto";
 
-message CertificatesServiceIssueRequest {
-  enum Provider {
-    PROVIDER_UNSPECIFIED = 0;
-    PROVIDER_GCLOUD = 1;
-  }
+extend google.protobuf.EnumValueOptions {
+  optional string dns_provider = 50000;
+  // Be sure to read the docs about choosing the number here.
+}
 
+enum DNSProvider {
+  DNS_PROVIDER_UNSPECIFIED = 0 [(dns_provider) = "unspecified"];
+  DNS_PROVIDER_GCLOUD = 1 [(dns_provider) = "gcloud"];
+}
+
+message CertificatesServiceIssueRequest {
   string vault_provider = 1 [(validate.rules).string = { in: [ "gcloud" ] }];
-  string acme_account_key_vault_resource = 2 [(validate.rules).string.min_len = 1];
+  string acme_account_key_vault_resource = 2
+      [(validate.rules).string.min_len = 1];
   string private_key_vault_resource = 3 [(validate.rules).string.min_len = 1];
   string certificate_vault_resource = 4 [(validate.rules).string.min_len = 1];
 
@@ -37,7 +44,8 @@ message CertificatesServiceIssueResponse {
 }
 
 service CertificatesService {
-  rpc Issue(CertificatesServiceIssueRequest) returns (CertificatesServiceIssueResponse) {
+  rpc Issue(CertificatesServiceIssueRequest)
+      returns (CertificatesServiceIssueResponse) {
     option (google.api.http) = {
       post: "/api/v1/certificates/issue"
       body: "*"

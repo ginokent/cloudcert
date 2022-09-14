@@ -46,9 +46,10 @@ lint:  ## go mod tidy の後に golangci-lint を実行します。
 	# tidy
 	go mod tidy
 	git diff --exit-code go.mod go.sum
+	# buf
+	buf lint
 	# lint
 	# cf. https://github.com/golangci/golangci-lint/releases
-	# if [[ ! -x ${GITROOT}/.local/bin/golangci-lint ]]; then GOBIN="${GITROOT}/.local/bin" go install github.com/golangci/golangci-lint/cmd/golangci-lint@v${GOLANGCI_VERSION}; fi
 	# cf. https://golangci-lint.run/usage/linters/
 	${GITROOT}/bin/golangci-lint run --fix --sort-results
 	git diff --exit-code
@@ -80,7 +81,7 @@ logs:  ## docker compose のログを出力します。
 
 .PHONY: gobuild
 gobuild: ## go build を実行します。
-	go build -ldflags "-X ${GOMODULE}/config.timestamp=${TIMESTAMP} -X ${GOMODULE}/config.branch=${BRANCH} -X ${GOMODULE}/config.version=${VERSION} -X ${GOMODULE}/config.revision=${REVISION}" ./cmd/${APP_NAME}/...
+	go build -ldflags "-X ${GOMODULE}/config.version=${VERSION} -X ${GOMODULE}/config.revision=${REVISION} -X ${GOMODULE}/config.branch=${BRANCH} -X ${GOMODULE}/config.timestamp=${TIMESTAMP}" ./cmd/${APP_NAME}/...
 
 .PHONY: run
 run: gobuild ## go build を実行し、コンパイル結果を起動します。
@@ -93,7 +94,7 @@ air:  ## air を起動します。
 
 .PHONY: build
 build:  ## タグ ${IMAGE_LOCAL}:${IMAGE_TAG} に向けて docker build を実行します。
-	docker build -t ${IMAGE_LOCAL}:${IMAGE_TAG} --build-arg TIMESTAMP=${TIMESTAMP} --build-arg BRANCH=${BRANCH} --build-arg VERSION=${VERSION} --build-arg REVISION=${REVISION} .
+	docker build --platform linux/amd64 -t ${IMAGE_LOCAL} --build-arg VERSION=${VERSION} --build-arg REVISION=${REVISION} --build-arg BRANCH=${BRANCH} --build-arg TIMESTAMP=${TIMESTAMP} .
 
 .PHONY: GOOGLE_CLOUD_PROJECT
 GOOGLE_CLOUD_PROJECT:
