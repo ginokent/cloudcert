@@ -8,13 +8,12 @@ import "google/protobuf/descriptor.proto";
 import "validate/validate.proto";
 
 extend google.protobuf.EnumValueOptions {
-  optional string dns_provider = 50000;
-  // Be sure to read the docs about choosing the number here.
+  optional string enum_stringer = 50000;
 }
 
 enum DNSProvider {
-  DNS_PROVIDER_UNSPECIFIED = 0 [(dns_provider) = "unspecified"];
-  DNS_PROVIDER_GCLOUD = 1 [(dns_provider) = "gcloud"];
+  DNS_PROVIDER_UNSPECIFIED = 0 [(enum_stringer) = "unspecified"];
+  DNS_PROVIDER_GCLOUD = 1 [(enum_stringer) = "gcloud"];
 }
 
 message CertificatesServiceIssueRequest {
