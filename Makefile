@@ -1,4 +1,4 @@
-SHELL        := /bin/bash -Eeu -o pipefail
+SHELL        := /usr/bin/env bash -Eeu -o pipefail
 GITROOT      := $(shell git rev-parse --show-toplevel || pwd || echo '.')
 MAKEFILE_DIR := $(subst /,,$(dir $(lastword ${MAKEFILE_LIST})))
 APP_NAME     := cloudcert
@@ -35,11 +35,11 @@ setup: githooks protocgens ## githooks protocgens 周りのツール郡などを
 
 .PHONY: buf-mod-update
 buf-mod-update: ## buf mod update を実行します。
-	${GITROOT}/bin/buf --debug --verbose mod update
+	${GITROOT}/.bin/buf --debug --verbose mod update
 
 .PHONY: buf
 buf: ## buf generate を実行します。
-	${GITROOT}/bin/buf --debug --verbose generate
+	${GITROOT}/.bin/buf --debug --verbose generate
 
 .PHONY: lint
 lint:  ## go mod tidy の後に golangci-lint を実行します。
@@ -51,7 +51,7 @@ lint:  ## go mod tidy の後に golangci-lint を実行します。
 	# lint
 	# cf. https://github.com/golangci/golangci-lint/releases
 	# cf. https://golangci-lint.run/usage/linters/
-	${GITROOT}/bin/golangci-lint run --fix --sort-results
+	${GITROOT}/.bin/golangci-lint run --fix --sort-results
 	git diff --exit-code
 
 .PHONY: test
