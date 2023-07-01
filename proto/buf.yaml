@@ -8,7 +8,6 @@ deps:
   - buf.build/googleapis/googleapis
   - buf.build/envoyproxy/protoc-gen-validate
 lint:
+  allow_comment_ignores: true
   use:
     - DEFAULT
-  except:
-    - PACKAGE_DIRECTORY_MATCH # NOTE: C# に source_relative オプションがなくディレクトリで v1 v2 を切ることができないため buf.yaml を各ディレクトリに配置している

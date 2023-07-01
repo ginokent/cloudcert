@@ -1,13 +1,13 @@
 SHELL        := /usr/bin/env bash -Eeu -o pipefail
 GITROOT      := $(shell git rev-parse --show-toplevel || pwd || echo '.')
 MAKEFILE_DIR := $(subst /,,$(dir $(lastword ${MAKEFILE_LIST})))
-APP_NAME     := cloudcert
+APP_NAME     := certman
 GOMODULE     := github.com/ginokent/${APP_NAME}
 PRE_PUSH     := ${GITROOT}/.git/hooks/pre-push
-TIMESTAMP    := $(git log -1 --format='%cI')
-BRANCH       := $(git rev-parse --abbrev-ref HEAD)
-VERSION      := $(git describe --tags --abbrev=0 --always)
-REVISION     := $(git log -1 --format='%H')
+VERSION      := $(shell git describe --tags --abbrev=0 --always)
+REVISION     := $(shell git log -1 --format='%H')
+BRANCH       := $(shell git rev-parse --abbrev-ref HEAD)
+TIMESTAMP    := $(shell git log -1 --format='%cI')
 IMAGE_TAG    := ${REVISION}
 REPO_LOCAL   := ${GOMODULE}
 REPO_REMOTE  := asia-docker.pkg.dev/${GOOGLE_CLOUD_PROJECT}/${GOMODULE}
@@ -35,11 +35,11 @@ setup: githooks protocgens ## githooks protocgens 周りのツール郡などを
 
 .PHONY: buf-mod-update
 buf-mod-update: ## buf mod update を実行します。
-	${GITROOT}/.bin/buf --debug --verbose mod update
+	cd proto && ${GITROOT}/.bin/buf --debug --verbose mod update
 
 .PHONY: buf
 buf: ## buf generate を実行します。
-	${GITROOT}/.bin/buf --debug --verbose generate
+	cd proto && ${GITROOT}/.bin/buf --debug --verbose generate
 
 .PHONY: lint
 lint:  ## go mod tidy の後に golangci-lint を実行します。
@@ -64,23 +64,23 @@ test:  ## go test を実行し coverage を出力します。
 ci: lint test ## CI 上で実行する lint や test のコマンドセット
 
 .PHONY: up
-up:  ## docker compose up -d && docker compose logs -f
+up:  ## docker compose up background
 	docker compose up -d
 
 .PHONY: down
-down:  ## docker compose を終了します。 image や volume も削除します。
+down:  ## docker compose down and remove image and volume
 	docker compose down --rmi all --volumes --remove-orphans
 
 .PHONY: restart
-restart: down up ## docker compose を再起動します。
+restart: down up ## docker compose restart
 
 .PHONY: logs
-logs:  ## docker compose のログを出力します。
-	@printf '[\033[36mNOTICE\033[0m] %s\n' "プロンプトに戻るには Ctrl+C を押してください。"
+logs:  ## docker compose logs -f
+	@printf '[\033[36mNOTICE\033[0m] %s\n' "If back prompt, enter Ctrl+C"
 	docker compose logs -f
 
 .PHONY: gobuild
-gobuild: ## go build を実行します。
+gobuild: ## Run go build
 	go build -ldflags "-X ${GOMODULE}/config.version=${VERSION} -X ${GOMODULE}/config.revision=${REVISION} -X ${GOMODULE}/config.branch=${BRANCH} -X ${GOMODULE}/config.timestamp=${TIMESTAMP}" ./cmd/${APP_NAME}/...
 
 .PHONY: run

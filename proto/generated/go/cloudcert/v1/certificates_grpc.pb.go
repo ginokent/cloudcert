@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             (unknown)
-// source: proto/v1/cloudcert/certificates.proto
+// source: cloudcert/v1/certificates.proto
 
 package cloudcertv1
 
@@ -101,5 +101,5 @@ var CertificatesService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/v1/cloudcert/certificates.proto",
+	Metadata: "cloudcert/v1/certificates.proto",
 }

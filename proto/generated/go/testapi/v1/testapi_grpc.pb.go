@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             (unknown)
-// source: proto/v1/testapi/testapi.proto
+// source: testapi/v1/testapi.proto
 
 package testapiv1
 
@@ -141,5 +141,5 @@ var TestAPIService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/v1/testapi/testapi.proto",
+	Metadata: "testapi/v1/testapi.proto",
 }

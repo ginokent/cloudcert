@@ -8,7 +8,7 @@ import "google/protobuf/descriptor.proto";
 import "validate/validate.proto";
 
 extend google.protobuf.EnumValueOptions {
-  optional string enum_stringer = 50000;
+  optional string enum_stringer = 55000;
 }
 
 enum DNSProvider {

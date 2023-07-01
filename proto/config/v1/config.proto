@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package config.v1;
+option go_package = "github.com/ginokent/cloudcert/generated/go/proto/v1/config;configv1";
+
+import "google/protobuf/descriptor.proto";
+
+extend google.protobuf.EnumValueOptions {
+  optional string enum_stringer = 50000;
+}
+
+// buf:lint:ignore ENUM_VALUE_UPPER_SNAKE_CASE
+// buf:lint:ignore ENUM_VALUE_PREFIX
+// buf:lint:ignore ENUM_ZERO_VALUE_SUFFIX
+enum AppEnv {
+  unspecified = 0;
+  local = 1;
+}
